@@ -1,0 +1,28 @@
+# /etc/network/interfaces  (source of truth: home-server repo, symlinked here)
+# home-server: headless Proxmox laptop. No physical ethernet — the host uplink is wifi.
+#
+# NOTE: wlp1s0 (wifi) is deliberately NOT managed here. Proxmox uses ifupdown2,
+# whose wifi/wpa handling is unreliable; instead home-server-wifi.service owns the
+# wifi link (wpa_supplicant + dhclient — the proven runtime sequence). Keeping wifi
+# out of ifupdown avoids the two fighting over the interface.
+
+auto lo
+iface lo inet loopback
+
+# --- Internal NAT bridge for guest VMs --------------------------------------
+# Bridging does NOT work over wifi (APs drop frames for unauthenticated MACs), so
+# vmbr0 has no physical port. VMs get outbound internet via NAT/masquerade out the
+# wifi interface; nothing inbound is needed (Valheim crossplay is outbound-only).
+# The installer wrote `gateway 192.168.100.1` here, which black-holed the default
+# route on boot — REMOVED. This host is itself the VM gateway (192.168.100.1).
+auto vmbr0
+iface vmbr0 inet static
+    address 192.168.100.1/24
+    bridge-ports none
+    bridge-stp off
+    bridge-fd 0
+    post-up   sysctl -q -w net.ipv4.ip_forward=1
+    post-up   iptables -t nat -C POSTROUTING -s 192.168.100.0/24 -o wlp1s0 -j MASQUERADE 2>/dev/null || iptables -t nat -A POSTROUTING -s 192.168.100.0/24 -o wlp1s0 -j MASQUERADE
+    post-down iptables -t nat -D POSTROUTING -s 192.168.100.0/24 -o wlp1s0 -j MASQUERADE 2>/dev/null || true
+
+source /etc/network/interfaces.d/*
