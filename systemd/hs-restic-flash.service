@@ -1,0 +1,8 @@
+[Unit]
+Description=home-server restic backup to USB stick (host config + repo + world)
+RequiresMountsFor=/mnt/backup
+[Service]
+Type=oneshot
+ExecStart=/srv/dev/repos/home-server/backups/restic-flash.sh
+Nice=10
+IOSchedulingClass=idle
