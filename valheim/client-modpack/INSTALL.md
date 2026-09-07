@@ -4,9 +4,9 @@ To join the **BaldurianQuat** server you must run this **exact** mod set. The se
 (ModSentry) checks every mod's version + hash and **kicks any client that doesn't match** —
 so don't mix versions or let mods auto-update.
 
-Server password: **quat-bald-1.0**
-Join code: given separately (it's a crossplay code — **it changes whenever the server
-restarts**, e.g. on update days, so use the latest one shared).
+The **server password** and the **join code** are shared separately (not in this pack).
+The join code is a crossplay code and **changes whenever the server restarts** (e.g. on
+update days), so always use the latest one shared.
 
 ---
 
@@ -35,9 +35,9 @@ Cross-platform, handles BepInEx for you, and pulls the exact files (so hashes ma
 3. Install each package above **at the exact version listed** (use the package's
    *Versions* tab if it defaults to a newer one). Installing Jotunn and Drop That will
    offer BepInEx as a dependency — accept it (5.4.2333).
-4. First launch: **Start Modded** from r2modman, load any world once so Huginn writes
-   its config, then quit. (Optional Huginn tweak below.)
-5. Launch modded → Join Game → **Join by code** → enter the code → password `quat-bald-1.0`.
+4. Launch **Start Modded** once, load any world, then quit (lets the mods initialize).
+5. Launch modded → Join Game → **Join by code** → enter the code → enter the password
+   (code + password shared separately).
 
 Do **not** click "update" on these mods later — versions must stay pinned to the server.
 
@@ -53,19 +53,10 @@ Use this if you already have BepInEx set up, or prefer manual.
    (…/steamapps/common/Valheim). Launch once so BepInEx generates its folders, then quit.
 2. Copy the **six `.dll` files** from `BepInEx/plugins/` in this pack into your game's
    `…/Valheim/BepInEx/plugins/` folder.
-3. Launch the game once and load a world (so Huginn writes its config), then quit.
-4. Join: Join by code → password `quat-bald-1.0`.
+3. Launch the game once, then quit.
+4. Join: Join by code → enter the code → enter the password (both shared separately).
 
 Verify your DLLs match (optional): the SHA-256 of each file is in `SHA256SUMS.txt`.
-
----
-
-## Optional: Huginn map scan radius
-
-The server crew uses `PoiScanRadius = 10` (default is 30) — a personal display setting,
-not enforced. To match: after launching once, edit
-`…/Valheim/BepInEx/config/nightofgames.huginn.cfg`, set `PoiScanRadius = 10`, save,
-restart the game. (r2modman: Config Editor → Huginn Map.)
 
 ---
 
