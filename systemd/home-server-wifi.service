@@ -1,0 +1,21 @@
+[Unit]
+Description=home-server wifi link (wpa_supplicant + dhclient on wlp1s0)
+Documentation=file:///srv/dev/repos/home-server/host/hs-wifi-up.sh
+# Wait until the wifi netdev actually exists (the iwlwifi driver creates it after
+# the module probes). Firing before this is why the first reboot lost wifi.
+Wants=sys-subsystem-net-devices-wlp1s0.device
+After=sys-subsystem-net-devices-wlp1s0.device
+# Let "network online" reflect our completion for anything ordered after it.
+Before=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/sbin/hs-wifi-up.sh
+ExecStop=-/usr/sbin/dhclient -r wlp1s0
+ExecStop=-/usr/bin/pkill -f "wpa_supplicant.*-i *wlp1s0"
+TimeoutStartSec=120
+
+[Install]
+WantedBy=multi-user.target
