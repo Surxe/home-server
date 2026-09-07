@@ -10,12 +10,10 @@ users:
     shell: /bin/bash
     lock_passwd: false
 ssh_pwauth: false
-chpasswd:
-  expire: false
-  users:
-    # Break-glass console login only (host root drives the VM via the guest agent).
-    # CHANGE THIS — placeholder for a disposable box.
-    - {name: dev, password: "valheim-changeme", type: text}
+# The dev break-glass console password is intentionally NOT set here — this repo is
+# PUBLIC. It is applied post-provision by guests/set-vm-dev-password.sh, which reads the
+# host-only secret file /etc/home-server/valheim-vm-dev.password (root, 600; also kept
+# in Ethan's password manager). Never put the real password in this file.
 package_update: true
 packages:
   - qemu-guest-agent
