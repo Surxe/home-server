@@ -1,0 +1,17 @@
+# mods.manifest — authoritative mod set for ModSentry policy enforcement.
+# Source of truth: valheim-mods/SERVER-HANDOFF.md (Ethan's handoff). Byte-exact DLLs
+# are in ./dll/, verified against these SHA-256 pins. If ./dll/<dll> is absent,
+# stage-mods.sh downloads the pinned Thunderstore zip and extracts+verifies the DLL.
+#
+# Format:  name | version | dll | sha256 | role | url
+#   role: plugin (loaded on server) / required / optional (ModSentry policy refs).
+#         combine with '+', e.g. plugin+required
+# BepInEx pack (denikson 5.4.2333) is installed by the lloesche image (BEPINEX=true).
+# Client and server DLLs must be byte-identical or ModSentry kicks the client.
+#
+ModSentry|1.0.17|Landoria.ModSentry.dll|3737e773d53c9eff761e5db84b4940a41c359e87fa5c7d57949da27b317aa027|plugin+required|https://thunderstore.io/package/download/Landoria/ModSentry/1.0.17/
+Drop_That|3.1.4|Valheim.DropThat.dll|976b3843addd2e05b1248518e55b5a6572c52816f918d206c902c6a61cb2c274|plugin+required|https://thunderstore.io/package/download/ASharpPen/Drop_That/3.1.4/
+Jotunn|2.29.2|Jotunn.dll|f65751bc15e7ae7466b0f7d3b38c758397741c99a50890deb19acf738376bfb1|required|https://thunderstore.io/package/download/ValheimModding/Jotunn/2.29.2/
+Huginn_Map|1.0.5|Huginn.dll|1108fec508f9096efbb73aa032ba72502cc92eefe7829bd614587fd4395fcfcd|required|https://thunderstore.io/package/download/NightOfGames/Huginn_Map/1.0.5/
+GlassPieces|1.2.5|GlassPieces.dll|7b0999da2ad436087132755f1ccdfde48b8c29f3c1198841792cbb54db51988a|required|https://thunderstore.io/package/download/blacks7ar/GlassPieces/1.2.5/
+FarmGrid|1.0.0|FarmGrid.dll|35f77dd50625c30cc4fe20d49ea1fbd7e05f76a64c97eb0588cecba827916519|optional|https://thunderstore.io/package/download/Galateam/FarmGrid/1.0.0/

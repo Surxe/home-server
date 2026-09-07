@@ -1,0 +1,29 @@
+#cloud-config
+# Valheim VM cloud-init. Minimal on purpose: bring up the guest agent + Docker so the
+# Proxmox host can drive the rest (file push, compose up, mod staging) via `qm guest exec`.
+hostname: valheim
+manage_etc_hosts: true
+users:
+  - name: dev
+    groups: [sudo, docker]
+    sudo: "ALL=(ALL) NOPASSWD:ALL"
+    shell: /bin/bash
+    lock_passwd: false
+ssh_pwauth: false
+chpasswd:
+  expire: false
+  users:
+    # Break-glass console login only (host root drives the VM via the guest agent).
+    # CHANGE THIS — placeholder for a disposable box.
+    - {name: dev, password: "valheim-changeme", type: text}
+package_update: true
+packages:
+  - qemu-guest-agent
+  - unzip
+  - ca-certificates
+  - curl
+runcmd:
+  - systemctl enable --now qemu-guest-agent
+  - install -d -o dev -g dev /srv/valheim/config /srv/valheim/data /srv/valheim/mod-cache
+  - install -d /etc/valheim
+  - [ bash, -c, "curl -fsSL https://get.docker.com | sh >/var/log/docker-install.log 2>&1 && usermod -aG docker dev && touch /var/lib/cloud-docker-done" ]
