@@ -6,7 +6,10 @@ so don't mix versions or let mods auto-update.
 
 The **server password** and the **join code** are shared separately (not in this pack).
 The join code is a crossplay code and **changes whenever the server restarts** (e.g. on
-update days), so always use the latest one shared.
+update days). Good news: once you've joined once, Valheim remembers the server in your
+**Join Game list**, and you can **rejoin from there without re-entering a code** even
+after it rotates. The rotating code only matters for your **first** join (or if you
+clear/lose the saved entry) — so a freshly-shared code is mainly for new players.
 
 ---
 

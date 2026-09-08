@@ -44,6 +44,15 @@ them idempotently:
 
 So the rule is: **symlink where safe, bootstrap the rest.**
 
+### Guests are PUSHED, not symlinked
+
+The symlink model is host-only. A guest VM has no access to the host's repo checkout, so
+its config is **pushed into the guest over the QEMU guest agent** (`qm guest exec`), then
+applied inside it. For the Valheim VM this is scripted: **`guests/vm-apply-valheim.sh`**
+(push `valheim/` config → run `stage-mods.sh` → restart the container). The full deploy
+model, the BepInEx `config`-symlink gotcha, and the ModSentry/Jotunn plugin rules are
+documented in **`valheim/README.md`** — read it before touching the Valheim mod set.
+
 ## What the repo tracks
 
 - Host: `/etc/network/interfaces`, wpa_supplicant unit, NAT/masquerade rule,
