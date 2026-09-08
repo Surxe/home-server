@@ -15,9 +15,13 @@ DUMPDIR="${BACKUP_MNT}/vzdump"
 mountpoint -q "$BACKUP_MNT" || { echo "FATAL: $BACKUP_MNT not mounted"; exit 1; }
 install -d "$DUMPDIR"
 
+# NOTE: --notes-template is only accepted when the target is a *configured PVE
+# storage* (--storage), not a plain --dumpdir. The stick is a bare mount here, so
+# passing it made vzdump reject the whole run ("storage: missing property required
+# by 'notes-template'"). Dropped it; the timestamped filename already identifies the
+# dump. If we ever register the stick as a dir-storage, re-add it with --storage.
 vzdump "$VALHEIM_VMID" \
   --dumpdir "$DUMPDIR" \
   --mode snapshot \
   --compress zstd \
-  --prune-backups keep-last=6 \
-  --notes-template '{{guestname}} {{node}}'
+  --prune-backups keep-last=6
