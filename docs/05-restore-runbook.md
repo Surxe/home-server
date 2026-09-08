@@ -11,8 +11,42 @@ its correctness is the entire justification for letting Claude "go ham."
 | Bad mod/game update | Proxmox **snapshot rollback** of the Valheim guest | seconds |
 | Valheim guest broken/lost | Restore latest **vzdump** of the guest | minutes |
 | Host config messed up | Re-run **`bootstrap.sh`** (re-links + rewrites config) | minutes |
-| World corrupted, guest fine | `restic restore` the world from **flash or B2** into `/srv/valheim/config` | minutes |
+| World corrupted, guest fine | `restic restore` the world from **flash or B2** into `/srv/valheim/config` (stop the container first — see below) | minutes |
 | Total loss (new/wiped disk) | Full rebuild below | ~30 min + data restore |
+
+## Restoring the world into a live guest (don't clobber your own restore)
+
+The running Valheim server holds the world in memory and **autosaves over
+`/srv/valheim/config/worlds_local` on its own schedule**, and the lloesche image
+also runs a periodic **auto-update + restart** loop. Either one will overwrite a
+world you drop in underneath a live server. So when restoring *just the world*
+(flash or B2) into an otherwise-healthy guest:
+
+1. **Stop the container first** — `docker stop valheim`. It flushes once, then
+   autosave *and* the auto-update loop stop, so nothing rewrites the files while
+   you restore. (Re-confirmed in the 2026-09-07 drill: skip this and the live
+   server saves the old world back over the restore within a minute.)
+2. `restic restore <snap> --target / --include /srv/valheim/config/worlds_local`
+   — scope the `--include` so you don't clobber the BepInEx/mods tree.
+3. Verify the restored `.db` (size / mtime / sha256) **before** restarting.
+4. `docker start valheim`, then confirm the 4 plugins load and a join code prints.
+
+## Verifying a restore is faithful (hash timing matters)
+
+To prove the restored world matches the backup, the reference hash must be taken
+at the **same instant as the backup** — ideally from a *stopped* server, or read
+out of the backup itself. A hash captured from a live server *after* the backup
+will **not** match: the world keeps autosaving and drifts ahead of the frozen
+copy (this is exactly why the vzdump restore in the 2026-09-07 drill "mismatched"
+— the reference hash was ~30 min newer than the snapshot, not a corrupt restore).
+Freshness corollary:
+
+- A **vzdump** is only as current as the **last autosave before the snapshot**
+  (Valheim persists periodically, not continuously) — a whole-VM restore can lose
+  up to one autosave interval of progress.
+- The **B2 world snapshot** is the freshest single-file world copy; use it to roll
+  the world forward after a vzdump restore when you need the latest state (the
+  drill did exactly this: vzdump for the VM, then B2 for the current world).
 
 ## Full rebuild from bare metal
 

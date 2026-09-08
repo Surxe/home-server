@@ -9,6 +9,13 @@
 # BepInEx pack (denikson 5.4.2333) is installed by the lloesche image (BEPINEX=true).
 # Client and server DLLs must be byte-identical or ModSentry kicks the client.
 #
+# GOTCHA — Thunderstore / r2modman search is fuzzy and badly ranked: the mod you
+# want is often NOT the first hit (or even on the first page). Exact-name queries
+# still surface near-duplicates, forks, and unrelated packages above the real one,
+# so scroll a few results and confirm the author + package before trusting a URL.
+# Verify you grabbed the right one by matching the author/package in the url below
+# (e.g. NightOfGames/Huginn_Map, not some other "Huginn"), not just the mod name.
+#
 ModSentry|1.0.17|Landoria.ModSentry.dll|3737e773d53c9eff761e5db84b4940a41c359e87fa5c7d57949da27b317aa027|plugin+required|https://thunderstore.io/package/download/Landoria/ModSentry/1.0.17/
 Drop_That|3.1.4|Valheim.DropThat.dll|976b3843addd2e05b1248518e55b5a6572c52816f918d206c902c6a61cb2c274|plugin+required|https://thunderstore.io/package/download/ASharpPen/Drop_That/3.1.4/
 Jotunn|2.29.2|Jotunn.dll|f65751bc15e7ae7466b0f7d3b38c758397741c99a50890deb19acf738376bfb1|plugin+required|https://thunderstore.io/package/download/ValheimModding/Jotunn/2.29.2/
