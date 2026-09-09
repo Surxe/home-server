@@ -5,6 +5,8 @@ backup.env
 valheim.env
 # Transient mod download cache (DLLs themselves are tracked in valheim/dll/).
 valheim/mod-cache/
+# Generated runtime log from check-mod-updates.sh (data, not source).
+valheim/mod-update-history.csv
 # OS / editor junk
 *.swp
 *~
