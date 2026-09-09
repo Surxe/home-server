@@ -10,6 +10,9 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
 - `backups/` — restic (flash + B2) and vzdump scripts, retention, `backup.env.example`.
 - `valheim/` — `docker-compose.yml`, mod manifest + `stage-mods.sh`, DropThat loot cfg.
 - `guests/` — Valheim VM creation script + cloud-init.
+- `provisioning/` — cold-start on a new device: `gather-bundle.sh` (build the offline
+  flash bundle: repo + wifi debs), `first-contact.sh` (get a bare box online from that
+  bundle), and `NEW-DEVICE.md` (the full bare-metal-to-running checklist).
 - `bootstrap.sh` — idempotent apply: symlinks live paths into this repo, masks sleep,
   enables wifi, prints the manual follow-ups it cannot do.
 
@@ -19,8 +22,11 @@ file *is* editing live config. `bootstrap.sh` establishes the links + the non-sy
 bits (fstab). Secrets never live here — only their *locations* (`/etc/home-server/backup.env`,
 `/etc/valheim/valheim.env`).
 
-## Rebuild (short form — see docs/05)
-`git clone` → `bootstrap.sh` → mount backup stick → restore vzdump/world → supply secrets.
+## Rebuild
+- **New/bare device (cold start):** `provisioning/NEW-DEVICE.md` — build the flash
+  bundle, install Proxmox, `first-contact.sh` (get online), `bootstrap.sh`, restore.
+- **Short form (already online):** `git clone` → `bootstrap.sh` → mount backup stick →
+  restore vzdump/world → supply secrets. See `docs/05-restore-runbook.md`.
 
 ## Networking note
 No physical ethernet: the host uplink is **wifi**, owned by `home-server-wifi.service`

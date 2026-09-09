@@ -1,0 +1,38 @@
+# Offline bundle manifest
+
+What `gather-bundle.sh` puts on the flashdrive, and why. The guiding rule: the
+bundle carries ONLY what a fresh, offline box cannot fetch for itself — i.e. just
+enough to get wifi up. Once online, the box downloads everything else (documented
+in NEW-DEVICE.md), so it is never stale on the flash.
+
+## In the bundle (`home-server-bundle/`)
+
+- **`wifi-debs/`** — the wifi userspace, as `.deb`s for the target's Debian release
+  (trixie). This is the cold-start unblock: a bare Proxmox box has no wifi client,
+  so it cannot apt-install one without internet it doesn't have yet.
+  - Generic WPA stack (hardware-independent): `wpasupplicant`, `iw`, `rfkill`,
+    `wireless-regdb`, and wpasupplicant's non-base deps `libnl-3-200`,
+    `libnl-genl-3-200`, `libnl-route-3-200`, `libpcsclite1`.
+  - Common wifi-chip firmware (device-specific, best-effort): `firmware-iwlwifi`,
+    `firmware-realtek`, `firmware-misc-nonfree`. Often already present in the
+    Proxmox install (the first box's AX200 was), but bundled so a *different*
+    laptop's chip is covered.
+- **`home-server-repo.tar.gz`** — a pristine snapshot of this repo at HEAD. Carries
+  `first-contact.sh` and `bootstrap.sh` themselves, so the box needs nothing from
+  the network to start. Extracts to `/srv/dev/repos/home-server`.
+- **`NEW-DEVICE.md`**, **`offline-bundle.manifest`** — this runbook + list, for
+  reference at the keyboard.
+
+## Deliberately NOT in the bundle (fetched once online)
+
+- **Proxmox VE ISO** — installed from its own USB before any of this; separate.
+- **Debian cloud image** for the Valheim VM — `guests/create-valheim-vm.sh` pulls it.
+- **Node.js + Claude Code** — installed after first-contact (native installer).
+- **Valheim mods** — fetched/staged by `valheim/stage-mods.sh` per `valheim/mods.manifest`.
+- **Secrets** — `backup.env`, `valheim.env`; created by hand, never on the flash.
+
+## Refreshing the bundle
+
+Re-run `gather-bundle.sh` whenever the repo changes or the target Debian release
+changes. The `.debs` must match the target release, so run it on a box of that
+release (trixie for Proxmox 9).
