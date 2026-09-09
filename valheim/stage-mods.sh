@@ -15,8 +15,14 @@ MANIFEST="${HERE}/mods.manifest"
 DLLDIR="${HERE}/dll"
 CACHE="${HERE}/mod-cache"; mkdir -p "$CACHE"
 BEPINEX=/srv/valheim/config/bepinex
-PLUGINS="${BEPINEX}/plugins"; REQ="${BEPINEX}/config/ModSentry_Required"
-OPT="${BEPINEX}/config/ModSentry_Optional"; CFG="${BEPINEX}/config"
+# lloesche symlinks the runtime BepInEx/config -> /config/bepinex, so the BepInEx CONFIG
+# dir IS /config/bepinex itself (NOT /config/bepinex/config). ModSentry reads its policy
+# folders from BepInEx/config, i.e. directly under /config/bepinex — putting them a level
+# deeper means ModSentry finds no policy. Same for the DropThat loot cfg.
+PLUGINS="${BEPINEX}/plugins"
+CFG="${BEPINEX}"
+REQ="${CFG}/ModSentry_Required"
+OPT="${CFG}/ModSentry_Optional"
 
 [ -d "$BEPINEX" ] || { echo "BepInEx tree missing ($BEPINEX). Start the server once (BEPINEX=true) first."; exit 1; }
 mkdir -p "$PLUGINS" "$REQ" "$OPT" "$CFG"
@@ -50,11 +56,17 @@ done < "$MANIFEST"
 
 [ -f "${HERE}/drop_that.drop_table.cfg" ] && cp "${HERE}/drop_that.drop_table.cfg" "${CFG}/drop_that.drop_table.cfg" && echo "config   drop_that.drop_table.cfg"
 
-# lloesche syncs /config/bepinex/plugins into its runtime tree ADDITIVELY (no delete),
-# so removed mods would linger there and still load. Wipe it; it re-syncs from /config
-# on container start.
+# lloesche only ADDITIVELY syncs /config/bepinex/plugins into its runtime tree (no
+# delete), and does not always re-sync on a plain restart. So mirror /config into the
+# runtime tree ourselves — exact match — otherwise removed mods linger, and a wiped
+# tree comes up EMPTY (0 plugins, ModSentry off). After this, a container restart loads
+# exactly the /config set.
 RUNTIME_PLUGINS=/srv/valheim/data/bepinex/BepInEx/plugins
-[ -d "$RUNTIME_PLUGINS" ] && rm -rf "$RUNTIME_PLUGINS" && echo "cleared runtime plugin cache (re-syncs from /config on start)"
+if [ -d "$(dirname "$RUNTIME_PLUGINS")" ]; then
+  mkdir -p "$RUNTIME_PLUGINS"; rm -rf "${RUNTIME_PLUGINS:?}"/*
+  cp -a "$PLUGINS"/. "$RUNTIME_PLUGINS"/
+  echo "mirrored /config plugins -> runtime cache ($(ls -1 "$RUNTIME_PLUGINS" | tr '\n' ' '))"
+fi
 
 echo; echo "== plugins (loaded) =="; ls -1 "$PLUGINS"
 echo "== ModSentry_Required =="; ls -1 "$REQ"
