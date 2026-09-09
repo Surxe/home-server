@@ -60,6 +60,18 @@ launcher, scheduled world backups, and mod loading. Key points to wire in:
 
 ## 5. Mods and ModSentry
 
+> **Valheim 1.0 status (2026-09-09):** Jotunn 2.29.2 crashes on 1.0 (server-side
+> `SynchronizeInitialData` -> `ZRoutedRpc.Everybody` not found), blocking all joins.
+> Jotunn + its dependents **Huginn Map** and **FarmGrid** are temporarily disabled
+> (moved to `/srv/valheim/config/_disabled_mods_20260909/` on the VM; commented out in
+> `valheim/mods.manifest`; dropped from the client pack). Active set: **ModSentry,
+> DropThat, GlassPieces**. Re-enable the Jotunn stack once Jotunn ships a 1.0 build —
+> Ethan will tell Claude when it does. Poll releases with `valheim/check-mod-updates.sh`.
+>
+> NOTE: the "Huginn is client-side only" guidance below is wrong for 1.0 — Jotunn's
+> NetworkCompatibility makes Huginn mandatory on the server too, so Jotunn/Huginn are
+> `plugin+required` (not just `required`) when re-enabled.
+
 Follow `../valheim-mods/SERVER-HANDOFF.md` exactly for:
 
 - BepInEx pack extraction and the `start_server_bepinex.sh` launcher.

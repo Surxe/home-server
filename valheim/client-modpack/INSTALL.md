@@ -1,5 +1,12 @@
 # BaldurianQuat — Valheim modpack (client install)
 
+> ⚠️ **Valheim 1.0 update (2026-09-09) — temporary reduced mod set.**
+> Valheim 1.0 broke **Jotunn 2.29.2**; **Huginn Map** and **FarmGrid** depend on Jotunn, so all
+> three are **removed for now**. If you install them you will fail to load into the server.
+> **Install only: ModSentry, DropThat, GlassPieces** (plus BepInEx). When Jotunn releases a
+> 1.0-compatible build (Ethan will notify Claude), this pack and the server will be updated
+> together and the three mods added back.
+
 To join the **BaldurianQuat** server you must run this **exact** mod set. The server
 (ModSentry) checks every mod's version + hash and **kicks any client that doesn't match** —
 so don't mix versions or let mods auto-update.
@@ -12,17 +19,19 @@ update days), so always use the latest one shared.
 
 ## The mods (exact versions — must match)
 
-| Mod | Version | Thunderstore package |
-|---|---|---|
-| BepInEx pack | 5.4.2333 | denikson / BepInExPack_Valheim |
-| Jotunn (library) | 2.29.2 | ValheimModding / Jotunn |
-| ModSentry | 1.0.17 | Landoria / ModSentry |
-| Drop That | 3.1.4 | ASharpPen / Drop_That |
-| Huginn Map | 1.0.5 | NightOfGames / Huginn_Map |
-| GlassPieces | 1.2.5 | blacks7ar / GlassPieces |
-| FarmGrid (optional) | 1.0.0 | Galateam / FarmGrid |
+| Mod | Version | Thunderstore package | Install now? |
+|---|---|---|---|
+| BepInEx pack | 5.4.2333+ | denikson / BepInExPack_Valheim | ✅ yes (dependency) |
+| ModSentry | 1.0.17 | Landoria / ModSentry | ✅ required |
+| Drop That | 3.1.4 | ASharpPen / Drop_That | ✅ required |
+| GlassPieces | 1.2.5 | blacks7ar / GlassPieces | ✅ required |
+| Jotunn (library) | 2.29.2 | ValheimModding / Jotunn | ❌ **skip — breaks on 1.0** |
+| Huginn Map | 1.0.5 | NightOfGames / Huginn_Map | ❌ **skip — needs Jotunn** |
+| FarmGrid | 1.0.0 | Galateam / FarmGrid | ❌ **skip — needs Jotunn** |
 
-FarmGrid is optional (allowed but not required). The other five are required.
+**Current required set (Valheim 1.0):** ModSentry, Drop That, GlassPieces.
+The three marked ❌ are **temporarily removed** — see the notice at the top. Do not install
+them until Ethan confirms Jotunn has a 1.0-compatible release.
 
 ---
 
