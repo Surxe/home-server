@@ -15,13 +15,14 @@ UNITS=(
   home-server-wifi.service
   hs-restic-flash.service   hs-restic-flash.timer
   hs-vzdump-valheim.service hs-vzdump-valheim.timer
-  hs-mod-check.service      hs-mod-check.timer
+  hs-mod-check.service          hs-mod-check.timer
+  hs-mod-check-discord.service  hs-mod-check-discord.timer
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) We activate only the mod-check timer
 # here; the backup timers' enable-state is left to bootstrap.sh / the operator so this
 # installer never silently flips backup behaviour.
-TIMERS=(hs-mod-check.timer)
+TIMERS=(hs-mod-check.timer hs-mod-check-discord.timer)
 
 say "linking units into $UNIT_DIR"
 for u in "${UNITS[@]}"; do
@@ -32,7 +33,8 @@ for u in "${UNITS[@]}"; do
     echo "  skip (missing in repo): $u"
   fi
 done
-chmod +x "$REPO/valheim/notify-mod-updates.sh" "$REPO/valheim/check-mod-updates.sh" 2>/dev/null || true
+chmod +x "$REPO/valheim/notify-mod-updates.sh" "$REPO/valheim/notify-mod-updates-discord.sh" \
+         "$REPO/valheim/check-mod-updates.sh" 2>/dev/null || true
 
 say "reload + enable timers"
 systemctl daemon-reload
@@ -55,6 +57,16 @@ if [ ! -f "$ENVF" ]; then
   echo "  Test:  systemctl start hs-mod-check.service && journalctl -u hs-mod-check.service -n 20"
 else
   echo "  ok: $ENVF present"
+fi
+DENVF=/etc/home-server/mod-notify-discord.env
+if [ ! -f "$DENVF" ]; then
+  echo "  TODO: mod-update Discord alerts need a webhook. Do:"
+  echo "      install -d -m 700 /etc/home-server"
+  echo "      cp $REPO/valheim/mod-notify-discord.env.example $DENVF && chmod 600 $DENVF"
+  echo "      # then edit $DENVF and set DISCORD_WEBHOOK_URL"
+  echo "  Test:  systemctl start hs-mod-check-discord.service && journalctl -u hs-mod-check-discord.service -n 20"
+else
+  echo "  ok: $DENVF present"
 fi
 echo "  next mod-check run: $(systemctl show -p NextElapseUSecRealtime --value hs-mod-check.timer 2>/dev/null || echo '(unknown)')"
 echo "systemd units installed."
