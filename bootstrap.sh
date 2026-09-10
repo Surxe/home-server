@@ -20,7 +20,23 @@ link() { # link <target-in-repo> <live-path>
 
 [ "$(id -u)" -eq 0 ] || { echo "run as root (sudo)"; exit 1; }
 
-say "1. Symlinks (config-as-code)"
+say "1. Host packages"
+# Tools deliberately added to the host, tracked so a rebuild restores them.
+# Idempotent: apt-installs only what's missing. Auth/secrets are per-user and
+# staged manually — never here (e.g. gh reuses dev's git PAT; see docs).
+HOST_PKGS=(gh)   # gh = GitHub CLI
+missing=()
+for p in "${HOST_PKGS[@]}"; do
+  dpkg -s "$p" >/dev/null 2>&1 || missing+=("$p")
+done
+if [ "${#missing[@]}" -gt 0 ]; then
+  echo "  installing: ${missing[*]}"
+  apt-get update -qq && apt-get install -y "${missing[@]}"
+else
+  echo "  ok: all host packages present (${HOST_PKGS[*]})"
+fi
+
+say "2. Symlinks (config-as-code)"
 link "$REPO/host/interfaces"              /etc/network/interfaces
 link "$REPO/host/logind-home-server.conf" /etc/systemd/logind.conf.d/home-server.conf
 link "$REPO/host/hs-wifi-up.sh"           /usr/local/sbin/hs-wifi-up.sh
@@ -34,7 +50,7 @@ for u in hs-restic-flash hs-vzdump-valheim; do
 done
 chmod +x "$REPO"/host/hs-wifi-up.sh "$REPO"/backups/*.sh "$REPO"/guests/*.sh 2>/dev/null || true
 
-say "2. Non-symlinkable files + systemd state"
+say "3. Non-symlinkable files + systemd state"
 systemctl daemon-reload
 # Immediate, restart-free suspend protection for a lidded laptop.
 systemctl mask sleep.target suspend.target hibernate.target hybrid-sleep.target 2>/dev/null || true
@@ -50,13 +66,13 @@ if ! grep -q '/mnt/backup' /etc/fstab; then
   fi
 else echo "  ok: /mnt/backup already in fstab"; fi
 
-say "3. Guests"
+say "4. Guests"
 if command -v qm >/dev/null && ! qm status 100 >/dev/null 2>&1; then
   echo "  Valheim VM (100) absent. Recreate with: $REPO/guests/create-valheim-vm.sh"
   echo "  (needs the Debian cloud image; see the script header.)"
 else echo "  ok: VM 100 present (or qm unavailable)"; fi
 
-say "4. Manual follow-ups bootstrap can NOT do"
+say "5. Manual follow-ups bootstrap can NOT do"
 cat <<'EOF'
   - REBOOT to confirm wifi + default route persist (home-server-wifi.service).
   - Stage secrets (never committed):
