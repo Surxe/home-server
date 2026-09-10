@@ -70,11 +70,12 @@ if not WEBHOOK:
     print("mod-notify-discord: would have posted about: %s" % sig, file=sys.stderr)
     sys.exit(1)
 
-lines = []
+lines = ["**Not installed yet** — a newer version exists on Thunderstore; the server is "
+         "unchanged until someone applies it.", ""]
 for m in candidates:
     tag = "  `post-1.0`" if "*" in (m.get("status") or "") else ""
     dis = "  *(disabled — waiting on this)*" if m.get("disabled") else ""
-    lines.append("• **%s/%s**: `%s` → `%s` (published %s)%s%s"
+    lines.append("• **%s/%s** — running `%s`, available `%s` (published %s)%s%s"
                  % (m["namespace"], m["name"], m["pinned"], m["latest"],
                     m.get("date_updated"), tag, dis))
 
@@ -94,7 +95,7 @@ if len(desc) > 3900:            # Discord embed description hard-limit is 4096
 payload = {
     "username": "home-server",
     "embeds": [{
-        "title": "Valheim mod update(s) available (%d)" % len(candidates),
+        "title": "Valheim: %d mod update(s) available to install (not yet applied)" % len(candidates),
         "description": desc,
         "color": 0xE67E22,
         "footer": {"text": "checked %s UTC" % data.get("checked_at", "?")},
