@@ -6,7 +6,10 @@ set -euo pipefail
 VMID="${VMID:-100}"
 NAME=valheim
 MEM=4096
-CORES=3
+# 4 cores: Valheim uses ~2-3; the extra core is deliberate headroom so a misbehaving
+# mod that pegs the game threads can't fully starve the QEMU guest agent (which is the
+# only way in — no SSH). A mod peg on 3 cores locked the agent out on 2026-09-10.
+CORES=4
 DISK_GROW=+28G                     # cloud image is ~2G; grow to ~30G
 BRIDGE=vmbr0
 IPCFG="ip=192.168.100.10/24,gw=192.168.100.1"
