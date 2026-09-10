@@ -17,13 +17,14 @@ UNITS=(
   hs-vzdump-valheim.service hs-vzdump-valheim.timer
   hs-mod-check.service          hs-mod-check.timer
   hs-mod-check-discord.service  hs-mod-check-discord.timer
+  hs-mod-list.service           hs-mod-list.timer
   hs-valheim-status.service     hs-valheim-status.timer
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) We activate only the mod-check timer
 # here; the backup timers' enable-state is left to bootstrap.sh / the operator so this
 # installer never silently flips backup behaviour.
-TIMERS=(hs-mod-check.timer hs-mod-check-discord.timer hs-valheim-status.timer)
+TIMERS=(hs-mod-check.timer hs-mod-check-discord.timer hs-mod-list.timer hs-valheim-status.timer)
 
 say "linking units into $UNIT_DIR"
 for u in "${UNITS[@]}"; do
@@ -35,7 +36,8 @@ for u in "${UNITS[@]}"; do
   fi
 done
 chmod +x "$REPO/valheim/notify-mod-updates.sh" "$REPO/valheim/notify-mod-updates-discord.sh" \
-         "$REPO/valheim/check-mod-updates.sh" "$REPO/valheim/server-status-discord.sh" 2>/dev/null || true
+         "$REPO/valheim/check-mod-updates.sh" "$REPO/valheim/server-status-discord.sh" \
+         "$REPO/valheim/list-installed-mods.sh" 2>/dev/null || true
 
 say "reload + enable timers"
 systemctl daemon-reload
