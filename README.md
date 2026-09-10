@@ -6,12 +6,15 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
 
 ## Layout
 - `host/` — `/etc/network/interfaces`, wifi bring-up script, logind lid drop-in.
-- `systemd/` — `home-server-wifi.service` (wifi persistence) + backup service/timer pairs.
+- `systemd/` — `home-server-wifi.service` (wifi persistence), backup service/timer pairs,
+  `hs-mod-check.{service,timer}` (daily Valheim mod-update email), and `install.sh` (unit installer).
 - `backups/` — restic (flash + B2) and vzdump scripts, retention, `backup.env.example`.
-- `valheim/` — `docker-compose.yml`, mod manifest + `stage-mods.sh`, DropThat loot cfg.
+- `valheim/` — `docker-compose.yml`, mod manifest + `stage-mods.sh`, DropThat loot cfg,
+  `check-mod-updates.sh` (Thunderstore poll) + `notify-mod-updates.sh` (email on change).
 - `guests/` — Valheim VM creation script + cloud-init.
-- `bootstrap.sh` — idempotent apply: symlinks live paths into this repo, masks sleep,
-  enables wifi, prints the manual follow-ups it cannot do.
+- `install.sh` — top-level installer; calls the per-area installers (currently `systemd/install.sh`).
+- `bootstrap.sh` — idempotent first-boot host apply: symlinks live paths into this repo, masks
+  sleep, enables wifi, prints the manual follow-ups it cannot do.
 
 ## Deploy model
 Symlink-into-repo: live paths symlink back to files here (same inode), so editing a repo

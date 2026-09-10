@@ -16,9 +16,28 @@
 # Verify you grabbed the right one by matching the author/package in the url below
 # (e.g. NightOfGames/Huginn_Map, not some other "Huginn"), not just the mod name.
 #
+# ============================================================================
+# VALHEIM 1.0 (l-1.0.7, network v39, Unity 6) — mod status
+# ----------------------------------------------------------------------------
+# 1.0 broke the pre-1.0 mods (Jotunn 2.29.2 crashed on client connect via the
+# removed field ZRoutedRpc.Everybody; GlassPieces threw a client TypeLoadException).
+#
+# 2026-09-10: Jotunn shipped 2.30.0 and Drop That shipped 3.1.5 (both 1.0 builds),
+# so both are RE-ENABLED below. Still DISABLED (no 1.0 build yet): GlassPieces
+# (client TypeLoadException), Huginn Map + FarmGrid (both hard-depend on Jotunn but
+# have not rebuilt). Re-enable each — un-comment, bump version+SHA, re-stage, rebuild
+# the client pack, restart — once it ships a 1.0 build. Track with ./check-mod-updates.sh.
+# Disabled DLLs are preserved on the VM under /srv/valheim/config/_disabled_mods_20260909/.
+#
+# WARNING: do NOT leave DropThat's WriteDropTablesToFiles (drop_that.cfg [Debug]) enabled.
+# On 1.0 it pegs all game threads on world start and (on the old 3-core VM) starved the
+# guest agent, requiring a hard reset. Enable it briefly to dump prefab ids, grab the
+# files from BepInEx/Debug/, then set it back to false. (Jotunn 2.30.0 itself is fine.)
+# ============================================================================
 ModSentry|1.0.17|Landoria.ModSentry.dll|3737e773d53c9eff761e5db84b4940a41c359e87fa5c7d57949da27b317aa027|plugin+required|https://thunderstore.io/package/download/Landoria/ModSentry/1.0.17/
-Drop_That|3.1.4|Valheim.DropThat.dll|976b3843addd2e05b1248518e55b5a6572c52816f918d206c902c6a61cb2c274|plugin+required|https://thunderstore.io/package/download/ASharpPen/Drop_That/3.1.4/
-Jotunn|2.29.2|Jotunn.dll|f65751bc15e7ae7466b0f7d3b38c758397741c99a50890deb19acf738376bfb1|plugin+required|https://thunderstore.io/package/download/ValheimModding/Jotunn/2.29.2/
-Huginn_Map|1.0.5|Huginn.dll|1108fec508f9096efbb73aa032ba72502cc92eefe7829bd614587fd4395fcfcd|plugin+required|https://thunderstore.io/package/download/NightOfGames/Huginn_Map/1.0.5/
-GlassPieces|1.2.5|GlassPieces.dll|7b0999da2ad436087132755f1ccdfde48b8c29f3c1198841792cbb54db51988a|required|https://thunderstore.io/package/download/blacks7ar/GlassPieces/1.2.5/
-FarmGrid|1.0.0|FarmGrid.dll|35f77dd50625c30cc4fe20d49ea1fbd7e05f76a64c97eb0588cecba827916519|optional|https://thunderstore.io/package/download/Galateam/FarmGrid/1.0.0/
+Drop_That|3.1.5|Valheim.DropThat.dll|9b4c1718932f48eb2d1fe8e50973dccb53e9947bc5f9903b87d3da05ab5efaf4|plugin+required|https://thunderstore.io/package/download/ASharpPen/Drop_That/3.1.5/
+Jotunn|2.30.0|Jotunn.dll|51d32cfbe2db5c203ffb8855c155d185d572dda72db49066905679d8ec5e3c46|plugin+required|https://thunderstore.io/package/download/ValheimModding/Jotunn/2.30.0/
+# --- DISABLED until each ships a Valheim 1.0 build (see note above) ---
+# GlassPieces|1.2.5|GlassPieces.dll|7b0999da2ad436087132755f1ccdfde48b8c29f3c1198841792cbb54db51988a|required|https://thunderstore.io/package/download/blacks7ar/GlassPieces/1.2.5/
+# Huginn_Map|1.0.5|Huginn.dll|1108fec508f9096efbb73aa032ba72502cc92eefe7829bd614587fd4395fcfcd|plugin+required|https://thunderstore.io/package/download/NightOfGames/Huginn_Map/1.0.5/
+# FarmGrid|1.0.0|FarmGrid.dll|35f77dd50625c30cc4fe20d49ea1fbd7e05f76a64c97eb0588cecba827916519|optional|https://thunderstore.io/package/download/Galateam/FarmGrid/1.0.0/
