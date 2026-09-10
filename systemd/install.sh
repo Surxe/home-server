@@ -15,13 +15,16 @@ UNITS=(
   home-server-wifi.service
   hs-restic-flash.service   hs-restic-flash.timer
   hs-vzdump-valheim.service hs-vzdump-valheim.timer
-  hs-mod-check.service      hs-mod-check.timer
+  hs-mod-check.service          hs-mod-check.timer
+  hs-mod-check-discord.service  hs-mod-check-discord.timer
+  hs-mod-list.service           hs-mod-list.timer
+  hs-valheim-status.service     hs-valheim-status.timer
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) We activate only the mod-check timer
 # here; the backup timers' enable-state is left to bootstrap.sh / the operator so this
 # installer never silently flips backup behaviour.
-TIMERS=(hs-mod-check.timer)
+TIMERS=(hs-mod-check.timer hs-mod-check-discord.timer hs-mod-list.timer hs-valheim-status.timer)
 
 say "linking units into $UNIT_DIR"
 for u in "${UNITS[@]}"; do
@@ -32,7 +35,9 @@ for u in "${UNITS[@]}"; do
     echo "  skip (missing in repo): $u"
   fi
 done
-chmod +x "$REPO/valheim/notify-mod-updates.sh" "$REPO/valheim/check-mod-updates.sh" 2>/dev/null || true
+chmod +x "$REPO/valheim/notify-mod-updates.sh" "$REPO/valheim/notify-mod-updates-discord.sh" \
+         "$REPO/valheim/check-mod-updates.sh" "$REPO/valheim/server-status-discord.sh" \
+         "$REPO/valheim/list-installed-mods.sh" 2>/dev/null || true
 
 say "reload + enable timers"
 systemctl daemon-reload
@@ -55,6 +60,19 @@ if [ ! -f "$ENVF" ]; then
   echo "  Test:  systemctl start hs-mod-check.service && journalctl -u hs-mod-check.service -n 20"
 else
   echo "  ok: $ENVF present"
+fi
+# Discord webhook (one #valheim-server-status channel for all three feeds:
+# hs-valheim-status, hs-mod-list, hs-mod-check-discord). Optional EnvironmentFile — each
+# unit logs "not set" and exits 0 until staged.
+SENVF=/etc/home-server/discord-server-status.env
+if [ ! -f "$SENVF" ]; then
+  echo "  TODO: the Discord feeds (up/down + players, installed mods, mod-update alerts) need a webhook. Do:"
+  echo "      install -d -m 700 /etc/home-server"
+  echo "      cp $REPO/valheim/discord-server-status.env.example $SENVF && chmod 600 $SENVF"
+  echo "      # then edit $SENVF and set DISCORD_WEBHOOK_URL"
+  echo "  Test:  systemctl start hs-valheim-status.service && journalctl -u hs-valheim-status.service -n 20"
+else
+  echo "  ok: $SENVF present"
 fi
 echo "  next mod-check run: $(systemctl show -p NextElapseUSecRealtime --value hs-mod-check.timer 2>/dev/null || echo '(unknown)')"
 echo "systemd units installed."

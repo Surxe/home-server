@@ -1,0 +1,11 @@
+[Unit]
+Description=Valheim server-status heartbeat to Discord (hourly)
+
+[Timer]
+# Top of every hour.
+OnCalendar=*:00
+Persistent=true
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=timers.target
