@@ -19,5 +19,8 @@ The BepInEx pack is provided by the lloesche image and isn't listed.
 
 Add `--post` to send the list to Discord (`list-installed-mods.sh --post`, needs
 `DISCORD_WEBHOOK_URL`). That's what the daily systemd timer **`hs-mod-list.timer`** (09:10)
-does automatically, posting to the same webhook as the mod-update alert
-(`/etc/home-server/mod-notify-discord.env`). See [[valheim-server]].
+does automatically, posting to the **#valheim-server-status** channel webhook
+(`/etc/home-server/discord-server-status.env`). That one webhook is shared by all three
+Valheim Discord feeds: `hs-valheim-status` (hourly up/down + players),
+`hs-mod-list` (this daily inventory), and `hs-mod-check-discord` (mod version-update
+alerts). See [[valheim-server]].

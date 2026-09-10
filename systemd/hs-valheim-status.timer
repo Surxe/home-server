@@ -1,9 +1,9 @@
 [Unit]
-Description=Valheim server-status heartbeat to Discord (every 30 min)
+Description=Valheim server-status heartbeat to Discord (hourly)
 
 [Timer]
-# Every 30 minutes on the clock: :00 and :30.
-OnCalendar=*:00/30
+# Top of every hour.
+OnCalendar=*:00
 Persistent=true
 RandomizedDelaySec=30
 

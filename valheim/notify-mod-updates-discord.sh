@@ -8,7 +8,8 @@
 # (or not) their env files. Both call the read-only check-mod-updates.sh.
 #
 # The webhook URL is a secret and is NOT in the repo. The service pulls it from
-#   /etc/home-server/mod-notify-discord.env   (root:root 0600, see *.env.example)
+#   /etc/home-server/discord-server-status.env   (root:root 0600, see *.env.example) —
+# the #valheim-server-status channel webhook, shared with hs-valheim-status + hs-mod-list.
 # via EnvironmentFile, so it arrives here as an env var:
 #   DISCORD_WEBHOOK_URL
 #
@@ -65,7 +66,7 @@ if not sig:
 WEBHOOK = os.environ.get("DISCORD_WEBHOOK_URL")
 if not WEBHOOK:
     print("mod-notify-discord: DISCORD_WEBHOOK_URL not set "
-          "(stage /etc/home-server/mod-notify-discord.env).", file=sys.stderr)
+          "(stage /etc/home-server/discord-server-status.env).", file=sys.stderr)
     print("mod-notify-discord: would have posted about: %s" % sig, file=sys.stderr)
     sys.exit(1)
 
@@ -96,9 +97,7 @@ payload = {
         "title": "Valheim mod update(s) available (%d)" % len(candidates),
         "description": desc,
         "color": 0xE67E22,
-        "footer": {"text": "checked %s UTC • to adopt: bump version+SHA in mods.manifest, "
-                           "stage-mods.sh, rebuild client pack, restart"
-                           % data.get("checked_at", "?")},
+        "footer": {"text": "checked %s UTC" % data.get("checked_at", "?")},
     }],
 }
 req = urllib.request.Request(

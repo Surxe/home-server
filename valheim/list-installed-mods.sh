@@ -11,8 +11,9 @@
 #   ./list-installed-mods.sh --post   # post the list to a Discord webhook
 #
 # --post reads the webhook from the environment (DISCORD_WEBHOOK_URL); the systemd unit
-# hs-mod-list.service loads it from /etc/home-server/mod-notify-discord.env — the SAME
-# webhook the mod-update alert uses. Without the webhook, --post logs and exits 0.
+# hs-mod-list.service loads it from /etc/home-server/discord-server-status.env — the SAME
+# webhook the status heartbeat uses (#valheim-server-status). Without it, --post logs
+# and exits 0.
 #
 # Driven daily by systemd/hs-mod-list.{service,timer}.
 set -euo pipefail
@@ -70,7 +71,7 @@ if mode == "table":
 WEBHOOK = os.environ.get("DISCORD_WEBHOOK_URL")
 if not WEBHOOK:
     print("mod-list: DISCORD_WEBHOOK_URL not set "
-          "(stage /etc/home-server/mod-notify-discord.env) — would have posted %d mods "
+          "(stage /etc/home-server/discord-server-status.env) — would have posted %d mods "
           "(req=%d opt=%d)." % (total, len(required), len(optional)))
     sys.exit(0)
 
@@ -88,7 +89,6 @@ payload = {
         "title": "Valheim installed mods (%d)" % total,
         "color": 0x3498DB,
         "fields": fields,
-        "footer": {"text": "source: valheim/mods.manifest • BepInEx pack provided by the image"},
     }],
 }
 req = urllib.request.Request(

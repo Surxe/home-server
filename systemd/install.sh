@@ -61,21 +61,14 @@ if [ ! -f "$ENVF" ]; then
 else
   echo "  ok: $ENVF present"
 fi
-DENVF=/etc/home-server/mod-notify-discord.env
-if [ ! -f "$DENVF" ]; then
-  echo "  TODO: mod-update Discord alerts need a webhook. Do:"
-  echo "      install -d -m 700 /etc/home-server"
-  echo "      cp $REPO/valheim/mod-notify-discord.env.example $DENVF && chmod 600 $DENVF"
-  echo "      # then edit $DENVF and set DISCORD_WEBHOOK_URL"
-  echo "  Test:  systemctl start hs-mod-check-discord.service && journalctl -u hs-mod-check-discord.service -n 20"
-else
-  echo "  ok: $DENVF present"
-fi
-SENVF=/etc/home-server/valheim-status.env
+# Discord webhook (one #valheim-server-status channel for all three feeds:
+# hs-valheim-status, hs-mod-list, hs-mod-check-discord). Optional EnvironmentFile — each
+# unit logs "not set" and exits 0 until staged.
+SENVF=/etc/home-server/discord-server-status.env
 if [ ! -f "$SENVF" ]; then
-  echo "  TODO: Valheim status heartbeat needs a webhook. Do:"
+  echo "  TODO: the Discord feeds (up/down + players, installed mods, mod-update alerts) need a webhook. Do:"
   echo "      install -d -m 700 /etc/home-server"
-  echo "      cp $REPO/valheim/valheim-status.env.example $SENVF && chmod 600 $SENVF"
+  echo "      cp $REPO/valheim/discord-server-status.env.example $SENVF && chmod 600 $SENVF"
   echo "      # then edit $SENVF and set DISCORD_WEBHOOK_URL"
   echo "  Test:  systemctl start hs-valheim-status.service && journalctl -u hs-valheim-status.service -n 20"
 else
