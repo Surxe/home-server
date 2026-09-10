@@ -1,10 +1,10 @@
 # BaldurianQuat client modpack
 
-> ⚠️ **Valheim 1.0 (2026-09-09): do NOT install Jotunn, Huginn Map, or FarmGrid right now.**
-> The 1.0 update broke **Jotunn 2.29.2**, and Huginn Map + FarmGrid depend on it — installing
-> them will stop you loading into the server. The current joinable set is **ModSentry, DropThat,
-> GlassPieces** only. Ethan will let Claude know when Jotunn ships a 1.0 build, and this pack +
-> the server policy will be updated together. See `../mods.manifest` for details.
+> ⚠️ **Valheim 1.0: reduced mod set.** Jotunn is back (2.30.0 is a 1.0 build), so the
+> required set is **ModSentry, Drop That, Jotunn**, plus **FarmGrid** (optional). Still
+> removed on 1.0: **GlassPieces** (throws a TypeLoadException on 1.0) and **Huginn Map**
+> (loads but its map-share/boat features use game APIs 1.0 removed) — both need a real 1.0
+> rebuild before they come back. See `../mods.manifest` for the full status + evidence.
 
 The mod set friends install to join the server. Byte-identical to the server policy
 (ModSentry enforces version + SHA-256), sourced from ../dll/ (hash-pinned in ../mods.manifest).
@@ -13,5 +13,5 @@ The mod set friends install to join the server. Byte-identical to the server pol
 - `SHA256SUMS.txt` — expected DLL hashes for verification.
 - `build-modpack.sh` — assembles the distributable zip from ../dll/.
 
-Client set (Valheim 1.0, current): **ModSentry, DropThat, GlassPieces** (required).
-Temporarily removed until Jotunn is 1.0-compatible: ~~Jotunn, Huginn Map, FarmGrid~~.
+Client set (Valheim 1.0, current): **ModSentry, Drop That, Jotunn** (required) + **FarmGrid**
+(optional). Removed until they ship a 1.0 build: ~~GlassPieces, Huginn Map~~.

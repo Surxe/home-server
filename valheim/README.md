@@ -47,14 +47,18 @@ else downloading the pinned Thunderstore zip), and lays out the plugins + ModSen
 - **`required` / `optional`** — client DLL hash references (`ModSentry_Required/`,
   `ModSentry_Optional/`) that ModSentry compares each client against.
 
-Server-loaded plugins: **ModSentry, DropThat, Jotunn, Huginn**. Two non-obvious inclusions:
+Server-loaded plugins (Valheim 1.0): **ModSentry, DropThat, Jotunn**. **Huginn is currently
+disabled** (loads on 1.0 but its map-share/boat features are broken — see `mods.manifest`), so
+it is not loaded right now; the rationale below is why it must be a server `plugin` **when
+re-enabled**. Two non-obvious points:
 
 - **Jotunn** must be loaded server-side so ModSentry can reflect the Jotunn-dependent policy
   DLLs (e.g. Huginn) when building the policy.
-- **Huginn** must be loaded server-side because it enforces **Jotunn NetworkCompatibility**
-  (`EveryoneMustHaveMod`): if a client has Huginn and the server doesn't, Jotunn rejects the
-  client with *"Client loaded additional mod: Huginn Map"* — a separate layer from ModSentry.
-  FarmGrid is also Jotunn-based but does **not** enforce compat, so it stays client-side/optional.
+- **Huginn** (when enabled) must be loaded server-side because it enforces **Jotunn
+  NetworkCompatibility** (`EveryoneMustHaveMod`): if a client has Huginn and the server
+  doesn't, Jotunn rejects the client with *"Client loaded additional mod: Huginn Map"* — a
+  separate layer from ModSentry. FarmGrid is also Jotunn-based but does **not** enforce compat,
+  so it stays client-side/optional.
 
 Rule of thumb: **any Jotunn mod that enforces NetworkCompatibility must be a server `plugin`,
 not just a policy reference.** (Loading a client-only map mod like Huginn on the headless
