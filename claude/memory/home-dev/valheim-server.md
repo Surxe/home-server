@@ -18,9 +18,16 @@ pipe through python3 for `out-data`). World + config bind-mounted at `/srv/valhe
 `stage-mods.sh` (deploy mods to the VM), `check-mod-updates.sh` (poll Thunderstore),
 `hooks/sync-plugins.sh` (PRE_SERVER_RUN_HOOK so auto-updates keep mods loaded).
 
-**State (2026-09): on Valheim 1.0 (l-1.0.7, Unity 6).** The old mods broke on 1.0, so the
-server runs a reduced set (ModSentry + DropThat); the Jotunn stack (Jotunn/Huginn/FarmGrid)
-is disabled pending 1.0 rebuilds — **Jotunn 2.30.0 + DropThat 3.1.5 shipped and are the
-re-enable signal** (a daily systemd job, `hs-mod-check`, emails Ethan when such updates land).
-Difficulty is vanilla/Normal, no world modifiers. Full detail: [[valheim-1.0-mod-status]],
-[[valheim-server-ops]]. Snapshot before mod/game changes (`qm snapshot 100 ...`).
+**State (2026-09): on Valheim 1.0 (l-1.0.7, Unity 6).** Server runs **ModSentry 1.0.17 +
+DropThat 3.1.5 + Jotunn 2.30.0** (Jotunn/DropThat updated to their 1.0 builds; Jotunn 2.30.0
+no longer crashes on connect). Still disabled until they ship 1.0 builds: **GlassPieces**
+(client TypeLoadException), **Huginn Map + FarmGrid** (need Jotunn but not rebuilt). A daily
+systemd job `hs-mod-check` emails Ethan when a disabled mod updates. Difficulty is
+vanilla/Normal, no world modifiers.
+
+**Gotchas:** VM is **4 cores** (was 3) — the extra core is headroom so a mod that pegs the
+game threads can't starve the guest agent (that locked it out on 2026-09-10; recover by
+`qm stop`/`qm set --cores`/`qm start`, then stop the container during boot). Do NOT leave
+DropThat `WriteDropTablesToFiles` enabled — it pegs the server on world start (use it briefly
+to dump prefab ids, then off). Full detail: [[valheim-1.0-mod-status]], [[valheim-server-ops]].
+Snapshot before mod/game changes (`qm snapshot 100 ...`).
