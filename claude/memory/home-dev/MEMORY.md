@@ -5,3 +5,4 @@ Curated, repo-maintained memory for the home-server box, installed from
 (More memories to come — networking, backups, host/Proxmox — as they're written.)
 
 - [Valheim server](valheim-server.md) — modded Valheim dedicated server (VM 100); drive via `qm guest exec`; on 1.0 with a reduced mod set
+- [DropThat prefab dump](dropthat-prefab-dump.md) — how to dump prefab/drop-table ids safely (enable → generate → STOP, or it hogs the VM)
