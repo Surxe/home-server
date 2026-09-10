@@ -1,10 +1,9 @@
 # BaldurianQuat — Valheim modpack (client install)
 
-> ⚠️ **Valheim 1.0 — reduced mod set.** Jotunn is back (2.30.0 is a 1.0 build), so the
-> required set is **ModSentry, Drop That, Jotunn**, plus **FarmGrid** (optional). Still
-> **removed on 1.0** and NOT to be installed: **GlassPieces** (crashes on 1.0) and **Huginn
-> Map** (loads but its map-share/boat features are broken on 1.0). Both will return once they
-> ship a real 1.0 build; this pack and the server are updated together.
+> ⚠️ **Valheim 1.0 mod set.** Required: **ModSentry, Drop That, Jotunn, BetterCarts**; plus
+> **FarmGrid** (optional). Still **removed on 1.0** and NOT to be installed: **GlassPieces**
+> (crashes on 1.0) and **Huginn Map** (loads but its map-share/boat features are broken on
+> 1.0). Both will return once they ship a real 1.0 build; this pack and the server update together.
 
 To join the **BaldurianQuat** server you must run this **exact** mod set. The server
 (ModSentry) checks every mod's version + hash and **kicks any client that doesn't match** —
@@ -27,14 +26,15 @@ clear/lose the saved entry) — so a freshly-shared code is mainly for new playe
 | ModSentry | 1.0.17 | Landoria / ModSentry | ✅ required |
 | Drop That | 3.1.5 | ASharpPen / Drop_That | ✅ required |
 | Jotunn (library) | 2.30.0 | ValheimModding / Jotunn | ✅ required (1.0 build) |
+| BetterCarts | 1.1.0 | TastyChickenLegs / BetterCarts | ✅ required |
 | FarmGrid | 1.0.0 | Galateam / FarmGrid | ➖ optional |
 | GlassPieces | 1.2.5 | blacks7ar / GlassPieces | ❌ **skip — crashes on 1.0** |
 | Huginn Map | 1.0.5 | NightOfGames / Huginn_Map | ❌ **skip — broken on 1.0** |
 
-**Current required set (Valheim 1.0):** ModSentry, Drop That, Jotunn. **FarmGrid** is
-optional — install it if you want the build-placement grid, skip it otherwise; either way you
-can join. The two marked ❌ are **removed** on 1.0 (see the notice at the top) — do not install
-them until Ethan confirms they have a real 1.0 build.
+**Current required set (Valheim 1.0):** ModSentry, Drop That, Jotunn, BetterCarts. **FarmGrid**
+is optional — install it if you want the build-placement grid, skip it otherwise; either way
+you can join. The two marked ❌ are **removed** on 1.0 (see the notice at the top) — do not
+install them until Ethan confirms they have a real 1.0 build.
 
 ---
 
@@ -76,9 +76,9 @@ Verify your DLLs match (optional): the SHA-256 of each file is in `SHA256SUMS.tx
 ## If you get disconnected immediately
 
 That's almost always ModSentry rejecting a mod mismatch (not a network issue):
-- Make sure you have **all three required mods (ModSentry, Drop That, Jotunn) at the exact
-  versions** above — a missing, extra, or wrong-version mod gets you kicked. (FarmGrid is
-  allowed but optional; GlassPieces and Huginn Map are **not** allowed on 1.0 — remove them.)
+- Make sure you have **all four required mods (ModSentry, Drop That, Jotunn, BetterCarts) at
+  the exact versions** above — a missing, extra, or wrong-version mod gets you kicked. (FarmGrid
+  is allowed but optional; GlassPieces and Huginn Map are **not** allowed on 1.0 — remove them.)
 - Remove any other Valheim mods for this profile — **extra** mods are rejected too.
 - If you have ModSentry installed, it will tell you on-screen exactly what's wrong.
 - Double-check you used the **current** join code (it changes on server restart).
