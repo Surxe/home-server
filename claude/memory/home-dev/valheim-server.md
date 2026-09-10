@@ -31,8 +31,11 @@ their current versions and NOT ok — need a real 1.0 rebuild, not just Jotunn):
 **GlassPieces 1.2.5** (still TypeLoadException/VTable on 1.0; depends only on BepInEx so Jotunn
 never applied) and **Huginn Map 1.0.5** (now *loads* under Jotunn but its own map-share
 `Minimap.ReadExploredArray` + boat `ZoneSystem.m_activeArea` calls hit 1.0-removed game APIs, so
-its headline features are broken). A daily systemd job `hs-mod-check` emails Ethan when a
-disabled mod updates. Difficulty is vanilla/Normal, no world modifiers.
+its headline features are broken). Also evaluated + **disabled 2026-09-10: Favorite_Items 0.1.5**
+(Valheazy) — Ethan asked to add it optional, but it throws a TypeLoadException every FixedUpdate
+on 1.0 (missing inventory-UI type `Element`); a missing-type error hits clients too. Left as a
+commented/tracked line in `mods.manifest` (not shipped). A daily systemd job `hs-mod-check`
+emails Ethan when a disabled mod updates. Difficulty is vanilla/Normal, no world modifiers.
 
 **"Will a disabled mod work now that its dep updated?" test recipe:** stage it as a `plugin`
 (server-side) in a scratch manifest, restart, and read `BepInEx/LogOutput.log` for the LATEST
