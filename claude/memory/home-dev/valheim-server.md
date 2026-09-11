@@ -41,7 +41,12 @@ Closer` 12m). NB: its `[Server._*]` cfg keys carry a literal `N. ` numeric prefi
 `5. Radar`); `[Client]` keys are plain. Same edit-while-stopped rule as BetterCarts (synced cfg).
 **FarmGrid 1.0.0 re-enabled** as a client-side **optional** mod (ModSentry_Optional) — verified
 2026-09-10 to load clean under Jotunn 2.30.0 (Jotunn was its only blocker; no new FarmGrid
-version needed). Still **disabled** (both tested 2026-09-10 on
+version needed). **FirstPersonMode 1.3.12 (Azumatt)** added 2026-09-11 as a second client-side
+**optional** mod (ModSentry_Optional; moves the camera into the player's head — a per-player
+preference, not server-loaded). Deps only BepInEx. Load-tested server-side on 1.0 before shipping
+(staged as `plugin`, restarted, log clean: `Loading [FirstPersonMode 1.3.12]` + its ConfigSync RPC
+registered, no TypeLoad/Method/Field errors), then restored to `optional`-only. DLL + SHA committed,
+added to the client pack + INSTALL docs. Still **disabled** (both tested 2026-09-10 on
 their current versions and NOT ok — need a real 1.0 rebuild, not just Jotunn):
 **GlassPieces 1.2.5** (still TypeLoadException/VTable on 1.0; depends only on BepInEx so Jotunn
 never applied) and **Huginn Map 1.0.5** (now *loads* under Jotunn but its own map-share
