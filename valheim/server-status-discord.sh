@@ -1,16 +1,24 @@
 #!/usr/bin/env bash
 # server-status-discord.sh — post Valheim server status (up/down + players, WITH NAMES)
-# to a Discord webhook. Two modes:
+# AND the Proxmox HOST's health to a Discord webhook. Two modes:
 #
 #   --edge       (frequent poll, every few min via hs-valheim-status-edge.timer)
-#                Post ONLY when the up/down state CHANGES vs the last recorded state —
-#                i.e. the server just started or just stopped. Quiet otherwise. This is
-#                the "someone ran start/stop" notifier; it does NOT depend on who cycled
-#                the server (Claude, cron, the mod PRE_SERVER_RUN_HOOK, or Ethan by hand)
-#                because it watches the server's actual state, not a command.
+#                Post ONLY on a CHANGE: (a) Valheim up/down flipped (the "someone ran
+#                start/stop" notifier), and/or (b) host health crossed the CRIT boundary
+#                (entered CRIT, or recovered out of it). Quiet otherwise. Watches real
+#                state, so it doesn't care who cycled the server (Claude, cron, the mod
+#                PRE_SERVER_RUN_HOOK, or Ethan by hand).
 #   --heartbeat  (default; daily via hs-valheim-status.timer)
-#                Post the current status unconditionally — a liveness "yes, still here"
-#                that also re-baselines the edge state.
+#                Post current status unconditionally — a liveness "yes, still here" that
+#                carries BOTH the Valheim status and a host-health snapshot, and re-baselines
+#                the edge state for both.
+#
+# WHY host health is folded in HERE rather than its own timer: it reuses the exact edge
+# (alert-on-change) + heartbeat (daily liveness) machinery and the one #valheim-server-status
+# webhook, so there's a single feed to watch. Health facts come from host/hs-health.sh
+# (`--line` => "LEVEL | metrics — issues", exit 0/1/2); see the `host-health` memory.
+# Only the CRIT boundary is edge-alerted — WARN would flap near thresholds, so WARN shows
+# up in the daily heartbeat only.
 #
 # WHY edge instead of a Claude Code hook: a Claude hook only fires for a start/stop typed
 # in a Claude session, fires the instant the command returns (before the ~40-60s the
@@ -28,7 +36,8 @@
 #     whenever a "Connections 0" proves the server was empty.
 # Edge polls do a CHEAP probe first (qm status + one `docker inspect`, no log parse) and
 # only do the expensive name-gather when they're actually about to post, so polling every
-# few minutes stays light on the guest agent.
+# few minutes stays light on the guest agent. The health probe on the edge path runs
+# --no-guest for the same reason (no second guest-agent call every few minutes).
 #
 # The webhook URL is a secret, NOT in the repo. The services pull it from
 #   /etc/home-server/discord-server-status.env   (root:root 0600, see *.env.example)
@@ -36,14 +45,20 @@
 #   DISCORD_WEBHOOK_URL              (required to post)
 #   VALHEIM_VMID (default 100)   VALHEIM_CONTAINER (default valheim)   [optional overrides]
 #   VALHEIM_STATUS_STATE_FILE (default /var/lib/home-server/valheim-status.state)
+#   HOST_HEALTH_STATE_FILE    (default /var/lib/home-server/host-health.state)
+#   HS_HEALTH                 (default <repo>/host/hs-health.sh)
 #
 # Exit codes: 0 = ok (posted, skipped-no-change, initialized baseline, or webhook
-#             unconfigured -> logged and skipped);   1 = the webhook POST itself failed.
+#             unconfigured -> logged and skipped);   1 = a webhook POST itself failed.
 set -euo pipefail
 
 : "${VALHEIM_VMID:=100}"
 : "${VALHEIM_CONTAINER:=valheim}"
 : "${VALHEIM_STATUS_STATE_FILE:=/var/lib/home-server/valheim-status.state}"
+: "${HOST_HEALTH_STATE_FILE:=/var/lib/home-server/host-health.state}"
+
+HERE="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+: "${HS_HEALTH:=$HERE/../host/hs-health.sh}"
 
 MODE=heartbeat
 case "${1:-}" in
@@ -53,6 +68,7 @@ case "${1:-}" in
 esac
 
 export VALHEIM_VMID VALHEIM_CONTAINER VALHEIM_STATUS_STATE_FILE
+export HOST_HEALTH_STATE_FILE HS_HEALTH
 export VALHEIM_STATUS_MODE="$MODE"
 
 python3 - <<'PY'
@@ -64,11 +80,16 @@ WEBHOOK    = os.environ.get("DISCORD_WEBHOOK_URL")
 MODE       = os.environ.get("VALHEIM_STATUS_MODE", "heartbeat")
 STATE_FILE = os.environ.get("VALHEIM_STATUS_STATE_FILE",
                             "/var/lib/home-server/valheim-status.state")
+HEALTH_STATE_FILE = os.environ.get("HOST_HEALTH_STATE_FILE",
+                                   "/var/lib/home-server/host-health.state")
+HS_HEALTH  = os.environ.get("HS_HEALTH", "")
 
 def run(cmd, timeout):
     try:
         return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
     except subprocess.TimeoutExpired:
+        return None
+    except Exception:
         return None
 
 def guest_out(cmd, timeout):
@@ -101,22 +122,42 @@ def cheap_state():
         return "down"
     return "unknown"                       # guest agent didn't answer / docker error
 
-def read_last():
+def read_file(p):
     try:
-        with open(STATE_FILE) as f:
+        with open(p) as f:
             return f.read().strip() or None
     except Exception:
         return None
 
-def write_state(s):
+def write_file(p, s):
     try:
-        os.makedirs(os.path.dirname(STATE_FILE), exist_ok=True)
-        with open(STATE_FILE, "w") as f:
+        os.makedirs(os.path.dirname(p), exist_ok=True)
+        with open(p, "w") as f:
             f.write(s + "\n")
     except Exception as e:
-        print("valheim-status: WARN could not write state file %s: %s" % (STATE_FILE, e))
+        print("status: WARN could not write state file %s: %s" % (p, e))
 
-# --- full status (expensive: player count + NAMES from the log) -------------------------
+def read_last():   return read_file(STATE_FILE)
+def write_state(s): write_file(STATE_FILE, s)
+
+# --- host health (delegated to host/hs-health.sh --line) --------------------------------
+LVLNAME = {0: "ok", 1: "warn", 2: "crit"}
+def host_health(no_guest=True):
+    """Run hs-health.sh --line; return (level 0/1/2, text). (-1, '') if unavailable."""
+    if not HS_HEALTH or not os.path.exists(HS_HEALTH):
+        print("host-health: hs-health.sh not found at %r — skipping" % HS_HEALTH)
+        return (-1, "")
+    cmd = [HS_HEALTH, "--line", "--no-color"] + (["--no-guest"] if no_guest else [])
+    r = run(cmd, 60)
+    if r is None:
+        print("host-health: hs-health.sh timed out — skipping")
+        return (-1, "")
+    lines = [l for l in (r.stdout or "").splitlines() if l.strip()]
+    text = lines[-1] if lines else ""
+    lvl = r.returncode if r.returncode in (0, 1, 2) else -1
+    return (lvl, text)
+
+# --- full Valheim status (expensive: player count + NAMES from the log) -----------------
 def full_status():
     """Return (headline, color, detail, players_txt, state_key, server_name)."""
     r = run(["qm", "status", VMID], 30)
@@ -203,71 +244,116 @@ def full_status():
 
     return headline, color, detail, players_txt, state_key, server_name
 
-def post(headline, color, detail, players_txt, server_name, tag):
-    title = "Valheim — %s" % (server_name or "server")
-    if not WEBHOOK:
-        print("valheim-status[%s]: DISCORD_WEBHOOK_URL not set "
-              "(stage /etc/home-server/discord-server-status.env) — would have posted: "
-              "%s | players=%s | %s" % (tag, headline, players_txt, detail))
-        return 0
-    payload = {
-        "username": "home-server",
-        "embeds": [{
-            "title": title,
-            "color": color,
-            "fields": [
-                {"name": "Status",         "value": "%s — %s" % (headline, detail), "inline": False},
-                {"name": "Players online", "value": players_txt,                    "inline": True},
-            ],
-        }],
+# --- embeds + posting -------------------------------------------------------------------
+def valheim_embed(headline, color, detail, players_txt, server_name):
+    return {
+        "title": "Valheim — %s" % (server_name or "server"),
+        "color": color,
+        "fields": [
+            {"name": "Status",         "value": "%s — %s" % (headline, detail), "inline": False},
+            {"name": "Players online", "value": players_txt,                    "inline": True},
+        ],
     }
+
+def health_embed(lvl, text):
+    if lvl >= 2:
+        title, color = "\U0001F534 host health: CRIT", 0xE74C3C
+    elif lvl == 1:
+        title, color = "\U0001F7E0 host health: WARN", 0xF39C12
+    else:
+        title, color = "\U0001F7E2 host health: OK", 0x2ECC71
+    return {
+        "title": title,
+        "color": color,
+        "fields": [{"name": "home-server", "value": (text or "(no data)")[:1000], "inline": False}],
+    }
+
+def post_embeds(embeds, tag):
+    """POST one Discord message carrying `embeds`. Returns 0 ok / 1 POST failed."""
+    if not embeds:
+        return 0
+    if not WEBHOOK:
+        titles = " + ".join(e.get("title", "?") for e in embeds)
+        print("status[%s]: DISCORD_WEBHOOK_URL not set "
+              "(stage /etc/home-server/discord-server-status.env) — would have posted: %s"
+              % (tag, titles))
+        return 0
+    payload = {"username": "home-server", "embeds": embeds}
     req = urllib.request.Request(
         WEBHOOK, data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json",
-                 "User-Agent": "home-server-valheim-status/1.1"})
+                 "User-Agent": "home-server-status/2.0"})
     try:
         with urllib.request.urlopen(req, timeout=30) as resp:
             resp.read()
     except urllib.error.HTTPError as e:
         body = e.read()[:200].decode("utf-8", "replace")
-        print("valheim-status[%s]: webhook POST failed: HTTP %s %s" % (tag, e.code, body))
+        print("status[%s]: webhook POST failed: HTTP %s %s" % (tag, e.code, body))
         return 1
     except Exception as e:
-        print("valheim-status[%s]: webhook POST failed: %s" % (tag, e))
+        print("status[%s]: webhook POST failed: %s" % (tag, e))
         return 1
-    print("valheim-status[%s]: posted -> %s | players=%s" % (tag, headline, players_txt))
+    print("status[%s]: posted -> %s" % (tag, " + ".join(e.get("title", "?") for e in embeds)))
     return 0
 
-# --- decide, per mode -------------------------------------------------------------------
-if MODE == "edge":
+# --- edge sub-checks --------------------------------------------------------------------
+def valheim_edge():
+    """Post only when Valheim up/down changed vs the state file. Returns rc (0/1)."""
     state = cheap_state()
     last  = read_last()
     if state == "unknown":
-        # Don't flap on a transient agent hiccup: no post, keep the last-known baseline.
         print("valheim-status[edge]: state unknown (agent didn't answer) — no post "
               "(last known: %s)" % (last or "none"))
-        raise SystemExit(0)
+        return 0
     if last is None:
-        # First run / lost state: adopt current as baseline silently, don't announce.
         write_state(state)
         print("valheim-status[edge]: initialized baseline to '%s' (no post)" % state)
-        raise SystemExit(0)
+        return 0
     if state == last:
         print("valheim-status[edge]: no change (%s) — no post" % state)
-        raise SystemExit(0)
+        return 0
     # Real transition -> gather full detail and announce.
     headline, color, detail, players_txt, state_key, server_name = full_status()
-    # Trust the cheap edge read for the transition; if the full pass now reads 'unknown'
-    # (agent went busy in the gap) fall back to a minimal announce of the cheap state.
-    rc = post(headline, color, detail, players_txt, server_name, "edge")
+    rc = post_embeds([valheim_embed(headline, color, detail, players_txt, server_name)], "edge")
     if rc == 0:
         write_state(state if state_key == "unknown" else state_key)
-    raise SystemExit(rc)
+    return rc
 
-# heartbeat (default): always post; re-baseline edge state when confident.
+def health_edge():
+    """Post only when host health crosses the CRIT boundary (enter CRIT / recover). rc (0/1)."""
+    lvl, text = host_health(no_guest=True)
+    if lvl < 0:
+        return 0
+    cur  = LVLNAME[lvl]
+    last = read_file(HEALTH_STATE_FILE)          # 'ok'|'warn'|'crit'|None
+    rc = 0
+    if last is None:
+        print("host-health[edge]: initialized baseline to '%s' (no post)" % cur)
+    elif lvl == 2 and last != "crit":
+        rc = post_embeds([health_embed(lvl, text)], "health-edge")
+    elif last == "crit" and lvl != 2:
+        rc = post_embeds([health_embed(lvl, text)], "health-recover")
+    else:
+        print("host-health[edge]: %s (crit-boundary unchanged) — no post" % cur)
+    write_file(HEALTH_STATE_FILE, cur)           # persist current level each run
+    return rc
+
+# --- decide, per mode -------------------------------------------------------------------
+if MODE == "edge":
+    v_rc = valheim_edge()
+    h_rc = health_edge()
+    raise SystemExit(v_rc or h_rc)
+
+# heartbeat (default): always post Valheim status + host-health snapshot; re-baseline both.
 headline, color, detail, players_txt, state_key, server_name = full_status()
-rc = post(headline, color, detail, players_txt, server_name, "heartbeat")
+lvl, htext = host_health(no_guest=True)
+embeds = [valheim_embed(headline, color, detail, players_txt, server_name)]
+if lvl >= 0:
+    embeds.append(health_embed(lvl, htext))
+rc = post_embeds(embeds, "heartbeat")
 if rc == 0 and state_key in ("up", "down"):
     write_state(state_key)
+if lvl >= 0:
+    write_file(HEALTH_STATE_FILE, LVLNAME[lvl])   # re-baseline the health edge too
 raise SystemExit(rc)
 PY

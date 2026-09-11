@@ -8,3 +8,4 @@ Curated, repo-maintained memory for the home-server box, installed from
 - [DropThat prefab dump](dropthat-prefab-dump.md) — how to dump prefab/drop-table ids safely (enable → generate → STOP, or it hogs the VM)
 - [Valheim mod inventory](valheim-mod-inventory.md) — list installed mods (required/optional + version): run `valheim/list-installed-mods.sh` (daily Discord post via `hs-mod-list.timer`)
 - [Valheim status edge notifier](valheim-status-edge-notifier.md) — up/down Discord posts are EDGE-triggered on start/stop (3-min probe) + daily heartbeat; why it's not a Claude hook
+- [Host health check](host-health.md) — run `host/hs-health.sh` for a graded (OK/WARN/CRIT, exit 0/1/2) report of load/mem/temp/thin-pool/uplink/VMs; run as root

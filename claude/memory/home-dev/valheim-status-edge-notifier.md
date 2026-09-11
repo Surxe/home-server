@@ -25,7 +25,17 @@ state**, not by hooking any command. `valheim/server-status-discord.sh` has two 
   transient hiccup — only confident up↔down transitions post);
 - unchanged → no post.
 
-All three Discord feeds still share the one **#valheim-server-status** webhook
+**Host health is folded into this same script/units** (2026-09): each run also consults
+`host/hs-health.sh --line --no-guest` (see [[host-health]]). `--heartbeat` appends a
+host-health snapshot as a **second embed** to the daily post; `--edge` posts a host-health
+alert **only when health crosses the CRIT boundary** (enter CRIT / recover) — WARN is
+heartbeat-only to avoid 3-min flap near thresholds. It's a **separate edge state** from
+Valheim up/down: `/var/lib/home-server/host-health.state` (`ok`/`warn`/`crit`), independent
+of `valheim-status.state`, so the two concerns post independently. `--no-guest` on the health
+probe keeps the frequent path from making a second guest-agent call. Rationale for folding it
+in here (vs its own `hs-health.timer`): one feed, one webhook, reuse the edge+heartbeat machinery.
+
+All Discord feeds still share the one **#valheim-server-status** webhook
 (`/etc/home-server/discord-server-status.env`, root-only). Both status units use it via
 `EnvironmentFile=-` (optional: logs "not set" and exits 0 until staged). Units are linked by
 `systemd/install.sh` (in its `UNITS`+`TIMERS`), which `enable --now`s both timers.
