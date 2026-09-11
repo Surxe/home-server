@@ -63,7 +63,13 @@ game APIs 1.0 changed (functionally broken). Then restore + apply via `guests/vm
 threads can't starve the guest agent (agent went unresponsive again during a 2026-09-10 apply
 restart; bumped 4->6, host has 8. Recover: `qm shutdown --forceStop 1` (graceful ACPI still
 flushes the world save even with the agent down) `/ qm set --cores / qm start`, then the instant
-guest-exec answers on boot, `docker compose stop` to free CPU BEFORE staging, then start). Do
+guest-exec answers on boot, `docker compose stop` to free CPU BEFORE staging, then start).
+**RAM:** alloc is **4 GiB fixed** (balloon off); host is only 7.1 GiB, so 4 GiB is the safe
+ceiling — bumping toward 5.5 would risk **host** OOM (which kills the whole VM), and the guest
+isn't RAM-pressured anyway (~1.7 GiB free, container ~2.2 GiB). The guest has a **1.5 GiB
+swapfile** (`/swapfile`, `vm.swappiness=10`) as an OOM cushion so a transient spike past 4 GiB
+degrades instead of crashing the server; it's config-as-code in `guests/cloud-init-valheim.yaml`
+(a rebuild reproduces it) and was applied live to the running VM to match. Do
 NOT leave DropThat `WriteDropTablesToFiles` enabled — it pegs the server on world start (use it
 briefly to dump prefab ids, then off).
 **Bumping a mod version:** `stage-mods` reuses a cached zip in the VM's `/srv/valheim/mod-cache/`
