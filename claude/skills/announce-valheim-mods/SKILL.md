@@ -1,22 +1,26 @@
 ---
 name: announce-valheim-mods
 description: >-
-  Post the current Valheim installed-mod list to the #valheim-server-status Discord channel,
-  immediately, after you add/update/remove a mod. Use ONLY once the server has been restarted
-  and verified stable (healthy + plugins loaded clean), so the announced list matches what is
-  actually running. This is the manual counterpart to the daily hs-mod-list timer.
+  Announce a Valheim mod-set change on the #valheim-server-status Discord channel: a diff of
+  what was added / version-bumped / removed / had its role changed (each labelled
+  required/optional), computed automatically from mods.manifest. Use ONLY once the change is
+  applied AND the server is verified stable (healthy + plugins loaded clean), so you announce
+  a set that's really running. Can also post the full installed-mod list.
 ---
 
 # Announce a Valheim mod change on Discord
 
-When the mod set changes (a mod added, bumped, disabled, or removed via `mods.manifest`),
-the daily `hs-mod-list.timer` (09:10) will eventually post the new list — but that can be up
-to ~24h away. This skill posts the up-to-date list **now**, deliberately, so the channel
-reflects the change as soon as it's actually live.
+When the mod set changes (a mod added, version-bumped, disabled, or removed via
+`mods.manifest`), post a **change announcement** so the channel reflects it as soon as it's
+actually live — rather than waiting up to ~24h for the daily `hs-mod-list.timer` (09:10) to
+post the routine full inventory.
 
-Do this **only after the server is verified stable from the restart** — otherwise you'd
-announce a mod set that isn't really running (e.g. a plugin that failed to load and got
-rolled back). The post reads `mods.manifest` (host source of truth), so it's independent of
+This is **AI-orchestrated on purpose.** The diff is fully programmatic — `announce-mod-change.sh`
+computes it from `mods.manifest` vs a saved baseline — but *when* to fire it is a judgement a
+script can't make: only once the new mod version has been verified to actually load and run.
+So do this **only after the server is verified stable from the restart** — otherwise you'd
+announce a set that isn't really running (e.g. a plugin that failed to load and got rolled
+back). The post reads `mods.manifest` (host source of truth), so it's independent of live
 server state; the stability gate is about *truthfulness*, not a technical dependency.
 
 ## Preconditions — all must hold before you post
@@ -32,37 +36,63 @@ server state; the stability gate is about *truthfulness*, not a technical depend
    `BepInEx/LogOutput.log` for the last `Chainloader started`. (Per the mod-test recipe in the
    `valheim-server` memory.) If any of these fail, **fix or roll back first — do not post.**
 
-## Post it
+## Post it — the change announcement (primary)
 
-Fire the existing oneshot unit — it loads the webhook from
-`/etc/home-server/discord-server-status.env` and runs `list-installed-mods.sh --post`, so you
-never handle the secret:
+The right post for "we changed the mods" is the **diff** — what was added / version-bumped /
+removed / had its role changed since the last announcement, each labelled
+required / optional / server-only. `announce-mod-change.sh` computes that diff automatically
+(current `mods.manifest` vs a saved baseline in
+`/var/lib/home-server/valheim-mod-announce.json`), so the only judgement left to you is the
+one a script can't make: **whether the change is verified working** (the preconditions above).
+That's why there is deliberately **no timer** for it — you trigger it.
+
+**Preview the diff first** (read-only, never posts, never touches the baseline):
 
 ```
-sudo systemctl start hs-mod-list.service
+/srv/dev/repos/home-server/valheim/announce-mod-change.sh --dry-run
 ```
 
-Verify it actually posted (don't just assume):
+If that shows the change you expect, fire the oneshot unit — it loads the webhook from
+`/etc/home-server/discord-server-status.env` and runs `announce-mod-change.sh --post`, so you
+never handle the secret. On a confirmed post it saves the new baseline (so a re-run posts
+nothing — no double-announce):
 
 ```
+sudo systemctl start hs-mod-announce.service
+journalctl -u hs-mod-announce.service -n 10 --no-pager
+```
+
+Success looks like `mod-announce: posted N change(s) …; baseline saved.` Other outcomes:
+- `no changes since last announcement` — the baseline already matches (nothing to post; the
+  change was already announced, or the manifest wasn't actually edited).
+- `DISCORD_WEBHOOK_URL not set` / `would have posted …` — the webhook env isn't staged. The
+  baseline is left untouched, so it'll announce once staged. Unverified/leave-for-Ethan state,
+  not a failure to retry.
+
+## Post the full inventory instead (optional)
+
+If you'd rather post the **entire** current mod list (not just the diff) — e.g. re-baselining a
+channel, or the daily-cadence style — use the full-list unit:
+
+```
+sudo systemctl start hs-mod-list.service          # runs list-installed-mods.sh --post
 journalctl -u hs-mod-list.service -n 10 --no-pager
-```
-
-Success looks like `mod-list: posted N mods (req=… opt=… server-only=…)`. If instead you see
-`DISCORD_WEBHOOK_URL not set`, the webhook env isn't staged — that's an unverified/leave-for-Ethan
-state, not a failure to retry.
-
-Preview the exact list first (read-only, no post) if you want to eyeball it:
-
-```
-/srv/dev/repos/home-server/valheim/list-installed-mods.sh
+/srv/dev/repos/home-server/valheim/list-installed-mods.sh   # read-only preview
 ```
 
 ## Notes
 
-- One webhook (`#valheim-server-status`) is shared by all three Valheim feeds; this post is a
-  normal embed on that channel — fine to send once per real change, but don't fire it
-  repeatedly (no need to re-announce an unchanged list; the daily timer covers routine cadence).
+- One webhook (`#valheim-server-status`) is shared by all the Valheim feeds; this post is a
+  normal embed on that channel. The change announcer is self-deduping — it diffs against a saved
+  baseline and posts nothing when there's no change — so re-running it is harmless (unlike the
+  full-list post, which always posts).
 - This is a Claude/host action driven by the manifest, so it also covers a change Ethan or a
-  script made to `mods.manifest` — if the manifest changed and the server's stable, the list is
+  script made to `mods.manifest` — if the manifest changed and the server's stable, it's
   postable regardless of who edited it.
+- Don't confuse this with `hs-mod-check-discord` (the daily *update-available* alert): that
+  fires **before** a change, when Thunderstore has a newer version we haven't applied; this
+  fires **after** we apply and verify one.
+- If the baseline ever drifts (e.g. a change was applied but never announced, and you don't want
+  to post it retroactively), reset it silently with
+  `announce-mod-change.sh --baseline` (via `MOD_ANNOUNCE_STATE_FILE`-aware root run / the
+  installer seeds it the same way).

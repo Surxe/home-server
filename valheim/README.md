@@ -26,6 +26,10 @@ symlink into the host's repo, so config is **pushed into the VM** over the QEMU 
 2. From the Proxmox host: **`guests/vm-apply-valheim.sh`** — pushes the files into the VM,
    runs `stage-mods.sh`, and restarts the container. (Or do those three steps by hand.)
 3. A restart rotates the crossplay join code — see `client-modpack/INSTALL.md`.
+4. **Once verified stable**, announce the change on Discord: `announce-mod-change.sh --dry-run`
+   to preview the diff, then `sudo systemctl start hs-mod-announce.service` to post it
+   (added/bumped/removed, req/opt). Agent-triggered on purpose — see the `announce-valheim-mods`
+   skill; the daily `hs-mod-list` full-inventory post is separate.
 
 `stage-mods.sh` reads `mods.manifest`, verifies each DLL's SHA-256 (using `dll/` if present,
 else downloading the pinned Thunderstore zip), and lays out the plugins + ModSentry policy.

@@ -18,6 +18,7 @@ UNITS=(
   hs-mod-check.service          hs-mod-check.timer
   hs-mod-check-discord.service  hs-mod-check-discord.timer
   hs-mod-list.service           hs-mod-list.timer
+  hs-mod-announce.service        # agent-triggered, no timer (post a mod-set change diff)
   hs-valheim-status.service         hs-valheim-status.timer
   hs-valheim-status-edge.service    hs-valheim-status-edge.timer
 )
@@ -39,7 +40,20 @@ for u in "${UNITS[@]}"; do
 done
 chmod +x "$REPO/valheim/notify-mod-updates.sh" "$REPO/valheim/notify-mod-updates-discord.sh" \
          "$REPO/valheim/check-mod-updates.sh" "$REPO/valheim/server-status-discord.sh" \
-         "$REPO/valheim/list-installed-mods.sh" 2>/dev/null || true
+         "$REPO/valheim/list-installed-mods.sh" "$REPO/valheim/announce-mod-change.sh" 2>/dev/null || true
+
+# Seed the mod-change announcer's baseline to the CURRENT set on first install, so the
+# first real announcement diffs against today's set instead of posting every installed
+# mod as "added". Only if missing — never clobber a baseline (which would drop a pending,
+# not-yet-announced change).
+ANNOUNCE_STATE=/var/lib/home-server/valheim-mod-announce.json
+if [ ! -f "$ANNOUNCE_STATE" ]; then
+  install -d -m 755 /var/lib/home-server
+  MOD_ANNOUNCE_STATE_FILE="$ANNOUNCE_STATE" "$REPO/valheim/announce-mod-change.sh" --baseline \
+    && echo "  seeded mod-announce baseline: $ANNOUNCE_STATE"
+else
+  echo "  ok: mod-announce baseline present ($ANNOUNCE_STATE)"
+fi
 
 say "reload + enable timers"
 systemctl daemon-reload
@@ -68,7 +82,7 @@ fi
 # unit logs "not set" and exits 0 until staged.
 SENVF=/etc/home-server/discord-server-status.env
 if [ ! -f "$SENVF" ]; then
-  echo "  TODO: the Discord feeds (up/down + players, installed mods, mod-update alerts) need a webhook. Do:"
+  echo "  TODO: the Discord feeds (up/down + players, installed mods, mod-update alerts, mod-change announcements) need a webhook. Do:"
   echo "      install -d -m 700 /etc/home-server"
   echo "      cp $REPO/valheim/discord-server-status.env.example $SENVF && chmod 600 $SENVF"
   echo "      # then edit $SENVF and set DISCORD_WEBHOOK_URL"
