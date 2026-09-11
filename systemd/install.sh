@@ -18,13 +18,15 @@ UNITS=(
   hs-mod-check.service          hs-mod-check.timer
   hs-mod-check-discord.service  hs-mod-check-discord.timer
   hs-mod-list.service           hs-mod-list.timer
-  hs-valheim-status.service     hs-valheim-status.timer
+  hs-valheim-status.service         hs-valheim-status.timer
+  hs-valheim-status-edge.service    hs-valheim-status-edge.timer
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) We activate only the mod-check timer
 # here; the backup timers' enable-state is left to bootstrap.sh / the operator so this
 # installer never silently flips backup behaviour.
-TIMERS=(hs-mod-check.timer hs-mod-check-discord.timer hs-mod-list.timer hs-valheim-status.timer)
+TIMERS=(hs-mod-check.timer hs-mod-check-discord.timer hs-mod-list.timer \
+        hs-valheim-status.timer hs-valheim-status-edge.timer)
 
 say "linking units into $UNIT_DIR"
 for u in "${UNITS[@]}"; do

@@ -21,6 +21,7 @@ Add `--post` to send the list to Discord (`list-installed-mods.sh --post`, needs
 `DISCORD_WEBHOOK_URL`). That's what the daily systemd timer **`hs-mod-list.timer`** (09:10)
 does automatically, posting to the **#valheim-server-status** channel webhook
 (`/etc/home-server/discord-server-status.env`). That one webhook is shared by all three
-Valheim Discord feeds: `hs-valheim-status` (hourly up/down + players),
+Valheim Discord feeds: `hs-valheim-status` (up/down — now EDGE-triggered on start/stop via
+`hs-valheim-status-edge.timer` + a daily heartbeat, see [[valheim-status-edge-notifier]]),
 `hs-mod-list` (this daily inventory), and `hs-mod-check-discord` (mod version-update
 alerts). See [[valheim-server]].
