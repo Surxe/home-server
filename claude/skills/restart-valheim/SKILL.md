@@ -25,3 +25,5 @@ Notes:
 - `qm guest exec` returns JSON — pipe through `python3 -c 'import sys,json;print(json.load(sys.stdin)["out-data"])'` to read output.
 - Give it ~40–60s to come back (world load + PlayFab). Healthy = "Session ... is active with N player(s)".
 - If the whole container needs a restart (env change) use `docker restart valheim`; to restart the VM use `qm reboot 100` — not this skill.
+- **If this restart was to apply a mod add/update/removal:** once it's back up and verified
+  stable, announce the new mod list on Discord — see the `announce-valheim-mods` skill.
