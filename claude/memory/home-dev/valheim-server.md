@@ -19,11 +19,26 @@ pipe through python3 for `out-data`). World + config bind-mounted at `/srv/valhe
 `hooks/sync-plugins.sh` (PRE_SERVER_RUN_HOOK so auto-updates keep mods loaded).
 
 **State (2026-09): on Valheim 1.0 (l-1.0.7, Unity 6).** Server plugins: **ModSentry 1.0.17 +
-DropThat 3.1.5 + Jotunn 2.30.0 + BetterCarts 1.1.0** (Jotunn/DropThat on their 1.0 builds;
-Jotunn 2.30.0 no longer crashes on connect). **BetterCarts** (TastyChickenLegs; quick
-attach/detach, 4-player push, tunable cart weight/damage) added 2026-09-10 as `plugin+required`
-— last Thunderstore release 1.1.0 is pre-1.0 (2025-11-15) but tested to load CLEAN on 1.0
-(Harmony patches bind, its server ConfigSync RPC registers); deps only BepInEx, not Jotunn.
+DropThat 3.1.5 + Jotunn 2.30.0 + BetterCarts 1.1.1 + OneMapToRuleThemAll 2.8.0** (Jotunn/DropThat
+on their 1.0 builds; Jotunn 2.30.0 no longer crashes on connect). **BetterCarts** (TastyChickenLegs;
+quick attach/detach, multi-player push, tunable cart weight/damage) `plugin+required`, deps only
+BepInEx. Bumped 1.1.0 -> **1.1.1** on 2026-09-10 (latest release) — tested to load CLEAN on 1.0
+(Harmony patches bind, its server ConfigSync RPC registers, no TypeLoad/MissingMethod). Its config
+(`/config/bepinex/TastyChickenLegs.BetterCarts.cfg`, NOT repo-managed) is **Synced with Server**;
+tuned 2026-09-10 (Ethan): `allowPlayersToHelp = true`, `maxPlayers = 4` (mod max), `includePuller
+= false`, `playerMassReduction = 0.25`.
+**OneMapToRuleThemAll 2.8.0** (DrummerCraig; shared map exploration/fog-of-war + player pins,
+optional client radar) added 2026-09-10 as `plugin+required` — server-authoritative (pushes config
+to clients on connect), deps only BepInEx (not Jotunn). Unlike Huginn it loads CLEAN on 1.0:
+`58 Harmony patches applied, 0 skipped`, Fog/map-persistence init OK, no TypeLoad/Method-not-found.
+DLL + SHA committed; in the client pack as required. Config tuned 2026-09-10 (Ethan) in
+`/config/bepinex/drummercraig.one_map_to_rule_them_all.cfg` (server-synced, NOT repo-managed):
+**radar OFF for everyone** (`[Server._Global] 5. Radar = false` — one master gate kills radar for
+all creatures/ore/pickables/locations; the ~150 per-creature `_Vanilla.*.Radar` toggles are then
+moot), shared map + auto-pin kept ON (`SharedMap`/`AutoPin = true`), auto-pin distances tightened
+to fire only when close (`4. OreAutoPin`/`6. PickableAutoPin = Closest` 6m, `2. LocationAutoPin =
+Closer` 12m). NB: its `[Server._*]` cfg keys carry a literal `N. ` numeric prefix (e.g. the key IS
+`5. Radar`); `[Client]` keys are plain. Same edit-while-stopped rule as BetterCarts (synced cfg).
 **FarmGrid 1.0.0 re-enabled** as a client-side **optional** mod (ModSentry_Optional) — verified
 2026-09-10 to load clean under Jotunn 2.30.0 (Jotunn was its only blocker; no new FarmGrid
 version needed). Still **disabled** (both tested 2026-09-10 on
@@ -44,9 +59,17 @@ boot (log is appended across restarts — anchor on the last `Chainloader starte
 `Loading [..]` with no errors = loads; `Method/Field not found` warnings = it loads but uses
 game APIs 1.0 changed (functionally broken). Then restore + apply via `guests/vm-apply-valheim.sh`.
 
-**Gotchas:** VM is **4 cores** (was 3) — the extra core is headroom so a mod that pegs the
-game threads can't starve the guest agent (that locked it out on 2026-09-10; recover by
-`qm stop`/`qm set --cores`/`qm start`, then stop the container during boot). Do NOT leave
-DropThat `WriteDropTablesToFiles` enabled — it pegs the server on world start (use it briefly
-to dump prefab ids, then off). Full detail: [[valheim-1.0-mod-status]], [[valheim-server-ops]].
-Snapshot before mod/game changes (`qm snapshot 100 ...`).
+**Gotchas:** VM is **6 cores** (was 4, was 3) — headroom so a mod/world-load that pegs the game
+threads can't starve the guest agent (agent went unresponsive again during a 2026-09-10 apply
+restart; bumped 4->6, host has 8. Recover: `qm shutdown --forceStop 1` (graceful ACPI still
+flushes the world save even with the agent down) `/ qm set --cores / qm start`, then the instant
+guest-exec answers on boot, `docker compose stop` to free CPU BEFORE staging, then start). Do
+NOT leave DropThat `WriteDropTablesToFiles` enabled — it pegs the server on world start (use it
+briefly to dump prefab ids, then off).
+**Bumping a mod version:** `stage-mods` reuses a cached zip in the VM's `/srv/valheim/mod-cache/`
+if present, so a stale zip of the OLD version -> `SHA MISMATCH` on the new pin. `rm` that mod's
+`mod-cache/<Name>.zip` (there is no `dll/` dir in the VM; DLLs are downloaded+verified there).
+**Changing a Synced-with-Server mod cfg:** edit the `.cfg` while the server is **stopped**
+(`supervisorctl stop valheim-server`), else the still-running instance flushes its in-memory
+(old) value back over your edit on shutdown. Full detail: [[valheim-1.0-mod-status]],
+[[valheim-server-ops]]. Snapshot before mod/game changes (`qm snapshot 100 ...`).

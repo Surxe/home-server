@@ -47,8 +47,10 @@ else downloading the pinned Thunderstore zip), and lays out the plugins + ModSen
 - **`required` / `optional`** — client DLL hash references (`ModSentry_Required/`,
   `ModSentry_Optional/`) that ModSentry compares each client against.
 
-Server-loaded plugins (Valheim 1.0): **ModSentry, DropThat, Jotunn, BetterCarts** (BetterCarts
-has server-authoritative cart config sync, so it's loaded server-side and required on clients).
+Server-loaded plugins (Valheim 1.0): **ModSentry, DropThat, Jotunn, BetterCarts,
+OneMapToRuleThemAll** (BetterCarts and OneMapToRuleThemAll both have server-authoritative config
+sync, so they're loaded server-side and required on clients; OneMap loads clean on 1.0 — 58
+Harmony patches applied, 0 skipped — unlike Huginn).
 **Huginn is currently disabled** (loads on 1.0 but its map-share/boat features are broken — see `mods.manifest`), so
 it is not loaded right now; the rationale below is why it must be a server `plugin` **when
 re-enabled**. Two non-obvious points:
