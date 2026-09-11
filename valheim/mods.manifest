@@ -63,6 +63,13 @@ ModSentry|1.0.17|Landoria.ModSentry.dll|3737e773d53c9eff761e5db84b4940a41c359e87
 Drop_That|3.1.5|Valheim.DropThat.dll|9b4c1718932f48eb2d1fe8e50973dccb53e9947bc5f9903b87d3da05ab5efaf4|plugin+required|https://thunderstore.io/package/download/ASharpPen/Drop_That/3.1.5/
 Jotunn|2.30.0|Jotunn.dll|51d32cfbe2db5c203ffb8855c155d185d572dda72db49066905679d8ec5e3c46|plugin+required|https://thunderstore.io/package/download/ValheimModding/Jotunn/2.30.0/
 FarmGrid|1.0.0|FarmGrid.dll|35f77dd50625c30cc4fe20d49ea1fbd7e05f76a64c97eb0588cecba827916519|optional|https://thunderstore.io/package/download/Galateam/FarmGrid/1.0.0/
+# FirstPersonMode (Azumatt): moves the camera into the player's head for a first-person view
+# (per-player preference — hides/shrinks the head via its own config). Client-side visual mod,
+# depends only on BepInEx (not Jotunn). optional: each player who wants it installs+configures
+# it themselves; ModSentry allows-but-doesn't-require it. Added 2026-09-11, latest release
+# 1.3.12 (actively maintained through 1.0). Load-tested server-side on 1.0: loads CLEAN (no
+# TypeLoad/Harmony/dependency errors), so it won't break clients that run it (cf. Favorite_Items).
+FirstPersonMode|1.3.12|FirstPersonMode.dll|f942c253a38b667845935c6819e9f63e9606499af6775c3533b98d9e9761e791|optional|https://thunderstore.io/package/download/Azumatt/FirstPersonMode/1.3.12/
 # BetterCarts (TastyChickenLegs): quick attach/detach, up to 4 players push, tunable cart
 # weight/damage. Bumped 1.1.0 -> 1.1.1 on 2026-09-10 (latest Thunderstore release) and tested
 # on 1.0: loads CLEAN (Loading [BetterCarts 1.1.1]; its server ConfigSync RPC registers, no
