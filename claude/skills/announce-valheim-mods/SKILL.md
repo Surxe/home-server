@@ -92,6 +92,12 @@ journalctl -u hs-mod-list.service -n 10 --no-pager
 - Don't confuse this with `hs-mod-check-discord` (the daily *update-available* alert): that
   fires **before** a change, when Thunderstore has a newer version we haven't applied; this
   fires **after** we apply and verify one.
+- **Role ping (optional):** if `MOD_ANNOUNCE_ROLE_IDS` is set in
+  `/etc/home-server/discord-server-status.env` (comma-separated Discord role IDs, e.g. the
+  "valheim server" role), the announcement @-pings those roles — and *only* those (never
+  @everyone). Unset = no ping. It's config, not code: get an ID via Discord Developer Mode →
+  right-click role → Copy Role ID, then stage it in that env file. `--dry-run` and the service
+  log both say whether a ping will fire, so you can confirm before/after posting.
 - If the baseline ever drifts (e.g. a change was applied but never announced, and you don't want
   to post it retroactively), reset it silently with
   `announce-mod-change.sh --baseline` (via `MOD_ANNOUNCE_STATE_FILE`-aware root run / the

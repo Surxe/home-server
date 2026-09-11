@@ -36,6 +36,12 @@
 #   sudo systemctl start hs-mod-announce.service
 # which loads it from /etc/home-server/discord-server-status.env (#valheim-server-status,
 # the same webhook all the other Valheim feeds use), so you never handle the secret.
+#
+# ROLE PING (optional): set MOD_ANNOUNCE_ROLE_IDS in that same env file to a comma-separated
+# list of numeric Discord role IDs (e.g. the "valheim server" role) to @-ping them on each
+# announcement. Unset = no ping. Only these exact roles are pinged (never @everyone). The ID
+# is not a secret but is server-specific, so it lives in the env file, not the repo. Get it in
+# Discord: enable Developer Mode, then right-click the role → Copy Role ID.
 # Run directly (webhook unset) and it takes the "would have posted" branch — exit 0, no
 # save — which is how you preview safely from a plain sudo shell.
 #
@@ -148,8 +154,16 @@ if n_changes == 0:
     print("mod-announce: no changes since last announcement (%d mods) — nothing to post." % len(current))
     sys.exit(0)
 
+# Optional role ping (comma-separated numeric role IDs in MOD_ANNOUNCE_ROLE_IDS, staged in
+# the same env file as the webhook). Unset = no ping. Computed here so dry-run reports it too.
+role_ids = [r.strip() for r in os.environ.get("MOD_ANNOUNCE_ROLE_IDS", "").split(",")
+            if r.strip()]
+ping_note = ("will ping role(s): %s" % ", ".join(role_ids)) if role_ids else \
+            "no role ping (MOD_ANNOUNCE_ROLE_IDS unset)"
+
 if mode == "dry-run":
-    print("mod-announce: %d change(s) since last announcement:\n%s\n(%s)" % (n_changes, human(), footer))
+    print("mod-announce: %d change(s) since last announcement:\n%s\n(%s)\n(%s)"
+          % (n_changes, human(), footer, ping_note))
     print("mod-announce: DRY RUN — not posting, baseline unchanged.")
     sys.exit(0)
 
@@ -188,12 +202,20 @@ payload = {
     }],
 }
 
+# Attach the role ping (computed above). A role only NOTIFIES from a mention in `content`
+# (not in an embed), so we put "<@&ID>" there. allowed_mentions restricts the ping to exactly
+# these role IDs — parse:[] blocks @everyone/@here and any stray mention — and lets a webhook
+# ping a role even if it isn't marked "mentionable" server-side.
+if role_ids:
+    payload["content"] = " ".join("<@&%s>" % r for r in role_ids)
+    payload["allowed_mentions"] = {"parse": [], "roles": role_ids}
+
 WEBHOOK = os.environ.get("DISCORD_WEBHOOK_URL")
 if not WEBHOOK:
     print("mod-announce: DISCORD_WEBHOOK_URL not set "
           "(stage /etc/home-server/discord-server-status.env, or run via "
           "`systemctl start hs-mod-announce.service`).")
-    print("mod-announce: would have posted %d change(s):\n%s" % (n_changes, human()))
+    print("mod-announce: would have posted %d change(s) [%s]:\n%s" % (n_changes, ping_note, human()))
     print("mod-announce: baseline left unchanged (nothing was announced).")
     sys.exit(0)
 
@@ -213,6 +235,6 @@ except Exception as e:
     sys.exit(1)
 
 save_baseline()   # only after a confirmed post, so a failed post re-announces next time
-print("mod-announce: posted %d change(s) (added=%d updated=%d role=%d removed=%d); baseline saved."
-      % (n_changes, len(added), len(updated), len(role_changed), len(removed)))
+print("mod-announce: posted %d change(s) (added=%d updated=%d role=%d removed=%d); %s; baseline saved."
+      % (n_changes, len(added), len(updated), len(role_changed), len(removed), ping_note))
 PY

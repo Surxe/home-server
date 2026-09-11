@@ -34,5 +34,9 @@ Valheim Discord feeds:
   Run by the **`announce-valheim-mods` skill**. Preview with `announce-mod-change.sh --dry-run`;
   it diffs `mods.manifest` against a baseline at `/var/lib/home-server/valheim-mod-announce.json`
   (seeded by `systemd/install.sh`, saved on each post, resettable with `--baseline`).
+  **Role ping:** set `MOD_ANNOUNCE_ROLE_IDS` (comma-separated Discord role IDs) in the same
+  env file to @-ping role(s) — e.g. the "valheim server" role — on each announcement; only
+  those roles ping (never @everyone), unset = no ping. It's server-specific config (get the ID
+  via Discord Developer Mode → Copy Role ID), so it lives in the env file, not the repo.
 
 See [[valheim-server]].
