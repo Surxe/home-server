@@ -1,5 +1,5 @@
 [Unit]
-Description=home-server: post Valheim server status to Discord ONLY on up/down change (edge)
+Description=home-server: post to Discord on change (edge) — Valheim up/down + host-health CRIT boundary
 Documentation=file:///srv/dev/repos/home-server/valheim/server-status-discord.sh
 After=network-online.target
 Wants=network-online.target
@@ -10,7 +10,9 @@ Type=oneshot
 # the timer doesn't hard-fail before the webhook is staged; the script then logs
 # "DISCORD_WEBHOOK_URL not set" and exits 0 instead of posting.
 EnvironmentFile=-/etc/home-server/discord-server-status.env
-# --edge: cheap probe every run; post ONLY when up/down state changed vs the state file
-# (/var/lib/home-server/valheim-status.state). This is the start/stop notifier.
+# --edge: cheap probe every run; post ONLY on a change — Valheim up/down (vs
+# /var/lib/home-server/valheim-status.state) and/or host health crossing the CRIT
+# boundary (vs /var/lib/home-server/host-health.state, from host/hs-health.sh --line).
+# This is the start/stop notifier + the urgent host-health alarm.
 ExecStart=/srv/dev/repos/home-server/valheim/server-status-discord.sh --edge
 Nice=10

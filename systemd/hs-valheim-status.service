@@ -1,5 +1,5 @@
 [Unit]
-Description=home-server: post Valheim server status (up/down + players) to Discord (daily heartbeat)
+Description=home-server: daily Discord heartbeat — Valheim status (up/down + players) + host-health snapshot
 Documentation=file:///srv/dev/repos/home-server/valheim/server-status-discord.sh
 After=network-online.target
 Wants=network-online.target
@@ -10,6 +10,8 @@ Type=oneshot
 # the timer doesn't hard-fail before the webhook is staged; the script then logs
 # "DISCORD_WEBHOOK_URL not set" and exits 0 instead of posting.
 EnvironmentFile=-/etc/home-server/discord-server-status.env
-# --heartbeat (default): always post current status. Start/stop edges are the edge unit's job.
+# --heartbeat (default): always post current Valheim status + a host-health snapshot
+# (host/hs-health.sh --line) as a second embed, and re-baseline both edge state files.
+# Start/stop and host-health CRIT edges are the edge unit's job.
 ExecStart=/srv/dev/repos/home-server/valheim/server-status-discord.sh --heartbeat
 Nice=10
