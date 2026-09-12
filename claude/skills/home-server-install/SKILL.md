@@ -2,10 +2,10 @@
 name: home-server-install
 description: >-
   Use this WHENEVER you edit code in the home-server repo that install.sh deploys —
-  systemd units under systemd/, the Claude context under claude/ (CLAUDE.md, memory,
-  skills), or anything a sub-installer copies/symlinks. It enforces the rule: an edit
-  isn't done until it's installed live AND verified. If you tested it yourself and it
-  passed, Ethan's review is not required; if you couldn't test it, say so and leave it
+  systemd units under systemd/, the agent context under claude/ (CLAUDE.md/AGENTS.md,
+  memory, skills), or anything a sub-installer copies/symlinks. It enforces the rule: an
+  edit isn't done until it's installed live AND verified. If you tested it yourself and
+  it passed, Ethan's review is not required; if you couldn't test it, say so and leave it
   for him. Trigger on any such edit, before you report the change as complete.
 ---
 
@@ -22,8 +22,10 @@ Any edit under the home-server repo to code with a deploy step, i.e. anything
 
 - `systemd/*.service` / `*.timer` — symlinked into `/etc/systemd/system`; systemd needs a
   daemon-reload (and often a restart) to pick up changes.
-- `claude/CLAUDE.md`, `claude/skills/**`, `claude/memory/**` — **copied** to `~/.claude`,
-  so a repo edit does NOT reach the live area until you re-install.
+- `claude/CLAUDE.md`, `claude/skills/**`, `claude/memory/**` — **copied** to `~/.agents`
+  (skills symlinked into `~/.claude/skills`; memory symlinked into `~/.claude/projects/-<proj>/memory`
+  and rendered to `~/.dsh/memory` for the DeepSeek Harness), so a repo edit does NOT reach
+  the live area until you re-install.
 - Scripts a unit runs in place (e.g. `valheim/notify-mod-updates.sh`,
   `valheim/check-mod-updates.sh`, `host/hs-wifi-up.sh`) — live immediately from the repo
   path, but still must be **tested**.
@@ -56,10 +58,11 @@ If the edit is to VM-side Valheim assets instead (`docker-compose.yml`, `mods.ma
   set). For a oneshot service that's safe to run now: `sudo systemctl start <svc>` and read
   `journalctl -u <svc> -n 30` for success. (A service that hard-fails on missing secrets is
   "unverified", not "broken" — note it.)
-- **Claude context (`claude/`):** after `claude/install.sh`, confirm the file landed:
-  `~/.claude/CLAUDE.md`, `~/.claude/skills/<name>/SKILL.md`, and memory under
-  `~/.claude/projects/-<proj>/memory/`. A skill/CLAUDE change is only picked up by a NEW
-  session, so verify the file content, not live behavior.
+- **Agent context (`claude/`):** after `claude/install.sh`, confirm the file landed:
+  `~/.agents/AGENTS.md`, `~/.agents/skills/<name>/SKILL.md`, and memory under
+  `~/.agents/memory/` (plus `~/.dsh/memory/` for the DeepSeek Harness). A skill/AGENTS
+  change is only picked up by a NEW session, so verify the file content, not live
+  behavior.
 - **A script:** run it (or a dry-run / `--help` / a read-only path) and check the output.
 
 ## Rules

@@ -6,7 +6,7 @@ Curated, repo-maintained memory for the home-server box, installed from
 
 - [Valheim server](valheim-server.md) — modded Valheim dedicated server (VM 100); drive via `qm guest exec`; on 1.0 with a reduced mod set
 - [DropThat prefab dump](dropthat-prefab-dump.md) — how to dump prefab/drop-table ids safely (enable → generate → STOP, or it hogs the VM)
-- [Memories live in this repo](memories-live-in-this-repo.md) — write/edit home-server memories in claude/memory/home-dev/, then install.sh — never live in ~/.claude
+- [Memories live in this repo](memories-live-in-this-repo.md) — write/edit home-server memories in claude/memory/home-dev/, then install.sh — never live in ~/.agents
 - [Mod update: halt before docs](mod-update-halt-before-docs.md) — adding/updating mods: after server is up + verified, stop for Ethan's OK before docs or client mod docs
 - [Valheim mod inventory](valheim-mod-inventory.md) — list installed mods (required/optional + version): `valheim/list-installed-mods.sh`; the 4 Discord feeds incl. `hs-mod-announce` (agent-triggered mod-change diff via the announce-valheim-mods skill)
 - [Valheim add-mod tooling](valheim-add-mod.md) — add/bump/remove a mod: the `/add-valheim-mod` skill + its scripts (`mod-fetch.sh`, `verify-boot.sh`, `lib-gx.sh`)

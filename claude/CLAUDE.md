@@ -23,12 +23,17 @@ same "the machine is a scripted rebuild, not a weekend" philosophy for the serve
   `docs/` (`00`–`07` runbook).
 
 ## How work is organized (why this file exists)
-The goal is **small, focused Claude sessions** instead of one giant one. So:
-- **This CLAUDE.md** (global, always loaded) is the top-level orientation.
+The goal is **small, focused sessions** instead of one giant one. So:
+- **This file** (global, always loaded as `~/.agents/AGENTS.md`, symlinked to
+  `~/.claude/CLAUDE.md` and `~/.dsh/AGENTS.md`) is the top-level orientation for
+  both Claude Code and the DeepSeek Harness on this box.
 - **Memory** carries per-subsystem state — start by reading the memory index at
-  `~/.claude/projects/-home-dev/memory/MEMORY.md`, then load only the note you need.
-- **Skills** encode repeatable procedures. Notably **`home-server-install`**: run it
-  whenever you edit repo code that `install.sh` deploys.
+  `~/.agents/memory/MEMORY.md` (symlinked to `~/.claude/projects/-home-dev/memory/`),
+  then load only the note you need. The DeepSeek Harness reads the same notes from
+  `~/.dsh/memory/` via the `memory-standard` plugin.
+- **Skills** encode repeatable procedures, shared from `~/.agents/skills/`. Notably
+  **`home-server-install`**: run it whenever you edit repo code that `install.sh`
+  deploys.
 
 ## Working rules
 - **After editing anything `install.sh` deploys, install it and verify it** — follow the
