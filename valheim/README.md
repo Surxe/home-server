@@ -26,6 +26,10 @@ symlink into the host's repo, so config is **pushed into the VM** over the QEMU 
 2. From the Proxmox host: **`guests/vm-apply-valheim.sh`** — pushes the files into the VM,
    runs `stage-mods.sh`, and restarts the container. (Or do those three steps by hand.)
 3. A restart rotates the crossplay join code — see `client-modpack/INSTALL.md`.
+4. **Once verified stable**, announce the change on Discord: `announce-mod-change.sh --dry-run`
+   to preview the diff, then `sudo systemctl start hs-mod-announce.service` to post it
+   (added/bumped/removed, req/opt). Agent-triggered on purpose — see the `announce-valheim-mods`
+   skill; the daily `hs-mod-list` full-inventory post is separate.
 
 `stage-mods.sh` reads `mods.manifest`, verifies each DLL's SHA-256 (using `dll/` if present,
 else downloading the pinned Thunderstore zip), and lays out the plugins + ModSentry policy.
@@ -47,14 +51,21 @@ else downloading the pinned Thunderstore zip), and lays out the plugins + ModSen
 - **`required` / `optional`** — client DLL hash references (`ModSentry_Required/`,
   `ModSentry_Optional/`) that ModSentry compares each client against.
 
-Server-loaded plugins: **ModSentry, DropThat, Jotunn, Huginn**. Two non-obvious inclusions:
+Server-loaded plugins (Valheim 1.0): **ModSentry, DropThat, Jotunn, BetterCarts,
+OneMapToRuleThemAll** (BetterCarts and OneMapToRuleThemAll both have server-authoritative config
+sync, so they're loaded server-side and required on clients; OneMap loads clean on 1.0 — 58
+Harmony patches applied, 0 skipped — unlike Huginn).
+**Huginn is currently disabled** (loads on 1.0 but its map-share/boat features are broken — see `mods.manifest`), so
+it is not loaded right now; the rationale below is why it must be a server `plugin` **when
+re-enabled**. Two non-obvious points:
 
 - **Jotunn** must be loaded server-side so ModSentry can reflect the Jotunn-dependent policy
   DLLs (e.g. Huginn) when building the policy.
-- **Huginn** must be loaded server-side because it enforces **Jotunn NetworkCompatibility**
-  (`EveryoneMustHaveMod`): if a client has Huginn and the server doesn't, Jotunn rejects the
-  client with *"Client loaded additional mod: Huginn Map"* — a separate layer from ModSentry.
-  FarmGrid is also Jotunn-based but does **not** enforce compat, so it stays client-side/optional.
+- **Huginn** (when enabled) must be loaded server-side because it enforces **Jotunn
+  NetworkCompatibility** (`EveryoneMustHaveMod`): if a client has Huginn and the server
+  doesn't, Jotunn rejects the client with *"Client loaded additional mod: Huginn Map"* — a
+  separate layer from ModSentry. FarmGrid is also Jotunn-based but does **not** enforce compat,
+  so it stays client-side/optional.
 
 Rule of thumb: **any Jotunn mod that enforces NetworkCompatibility must be a server `plugin`,
 not just a policy reference.** (Loading a client-only map mod like Huginn on the headless

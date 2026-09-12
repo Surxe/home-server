@@ -20,8 +20,26 @@ packages:
   - unzip
   - ca-certificates
   - curl
+# Swap safety net: a small on-disk swapfile so a transient guest memory spike (Valheim
+# world/mod load pushing past its 4 GiB RAM) degrades gracefully instead of OOM-killing the
+# server. Deliberately small — RAM stays the primary store (see swappiness below); this is a
+# cushion, not extra capacity. Host is only 7.1 GiB, so the VM's RAM alloc stays 4 GiB fixed
+# rather than being bumped (that would risk host OOM). Applied live to the existing VM to
+# match; cloud-init makes a rebuilt VM reproduce it.
+swap:
+  filename: /swapfile
+  size: 1610612736      # 1.5 GiB, in bytes (matches the live-applied swapfile)
+  maxsize: 1610612736
+
+write_files:
+  # Prefer RAM; only dip into swap under real memory pressure (Debian default swappiness is 60).
+  - path: /etc/sysctl.d/99-swappiness.conf
+    content: |
+      vm.swappiness=10
+
 runcmd:
   - systemctl enable --now qemu-guest-agent
+  - sysctl -w vm.swappiness=10
   - install -d -o dev -g dev /srv/valheim/config /srv/valheim/data /srv/valheim/mod-cache
   - install -d /etc/valheim
   - [ bash, -c, "curl -fsSL https://get.docker.com | sh >/var/log/docker-install.log 2>&1 && usermod -aG docker dev && touch /var/lib/cloud-docker-done" ]

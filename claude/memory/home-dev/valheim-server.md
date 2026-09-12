@@ -18,16 +18,72 @@ pipe through python3 for `out-data`). World + config bind-mounted at `/srv/valhe
 `stage-mods.sh` (deploy mods to the VM), `check-mod-updates.sh` (poll Thunderstore),
 `hooks/sync-plugins.sh` (PRE_SERVER_RUN_HOOK so auto-updates keep mods loaded).
 
-**State (2026-09): on Valheim 1.0 (l-1.0.7, Unity 6).** Server runs **ModSentry 1.0.17 +
-DropThat 3.1.5 + Jotunn 2.30.0** (Jotunn/DropThat updated to their 1.0 builds; Jotunn 2.30.0
-no longer crashes on connect). Still disabled until they ship 1.0 builds: **GlassPieces**
-(client TypeLoadException), **Huginn Map + FarmGrid** (need Jotunn but not rebuilt). A daily
-systemd job `hs-mod-check` emails Ethan when a disabled mod updates. Difficulty is
-vanilla/Normal, no world modifiers.
+**State (2026-09): on Valheim 1.0 (l-1.0.7, Unity 6).** Server plugins: **ModSentry 1.0.17 +
+DropThat 3.1.5 + Jotunn 2.30.0 + BetterCarts 1.1.1 + OneMapToRuleThemAll 2.8.0** (Jotunn/DropThat
+on their 1.0 builds; Jotunn 2.30.0 no longer crashes on connect). **BetterCarts** (TastyChickenLegs;
+quick attach/detach, multi-player push, tunable cart weight/damage) `plugin+required`, deps only
+BepInEx. Bumped 1.1.0 -> **1.1.1** on 2026-09-10 (latest release) — tested to load CLEAN on 1.0
+(Harmony patches bind, its server ConfigSync RPC registers, no TypeLoad/MissingMethod). Its config
+(`/config/bepinex/TastyChickenLegs.BetterCarts.cfg`, NOT repo-managed) is **Synced with Server**;
+tuned 2026-09-10 (Ethan): `allowPlayersToHelp = true`, `maxPlayers = 4` (mod max), `includePuller
+= false`, `playerMassReduction = 0.25`.
+**OneMapToRuleThemAll 2.8.0** (DrummerCraig; shared map exploration/fog-of-war + player pins,
+optional client radar) added 2026-09-10 as `plugin+required` — server-authoritative (pushes config
+to clients on connect), deps only BepInEx (not Jotunn). Unlike Huginn it loads CLEAN on 1.0:
+`58 Harmony patches applied, 0 skipped`, Fog/map-persistence init OK, no TypeLoad/Method-not-found.
+DLL + SHA committed; in the client pack as required. Config tuned 2026-09-10 (Ethan) in
+`/config/bepinex/drummercraig.one_map_to_rule_them_all.cfg` (server-synced, NOT repo-managed):
+**radar OFF for everyone** (`[Server._Global] 5. Radar = false` — one master gate kills radar for
+all creatures/ore/pickables/locations; the ~150 per-creature `_Vanilla.*.Radar` toggles are then
+moot), shared map + auto-pin kept ON (`SharedMap`/`AutoPin = true`), auto-pin distances tightened
+to fire only when close (`4. OreAutoPin`/`6. PickableAutoPin = Closest` 6m, `2. LocationAutoPin =
+Closer` 12m). NB: its `[Server._*]` cfg keys carry a literal `N. ` numeric prefix (e.g. the key IS
+`5. Radar`); `[Client]` keys are plain. Same edit-while-stopped rule as BetterCarts (synced cfg).
+**FarmGrid 1.0.0 re-enabled** as a client-side **optional** mod (ModSentry_Optional) — verified
+2026-09-10 to load clean under Jotunn 2.30.0 (Jotunn was its only blocker; no new FarmGrid
+version needed). **FirstPersonMode 1.3.12 (Azumatt)** added 2026-09-11 as a second client-side
+**optional** mod (ModSentry_Optional; moves the camera into the player's head — a per-player
+preference, not server-loaded). Deps only BepInEx. Load-tested server-side on 1.0 before shipping
+(staged as `plugin`, restarted, log clean: `Loading [FirstPersonMode 1.3.12]` + its ConfigSync RPC
+registered, no TypeLoad/Method/Field errors), then restored to `optional`-only. DLL + SHA committed,
+added to the client pack + INSTALL docs. Still **disabled** (both tested 2026-09-10 on
+their current versions and NOT ok — need a real 1.0 rebuild, not just Jotunn):
+**GlassPieces 1.2.5** (still TypeLoadException/VTable on 1.0; depends only on BepInEx so Jotunn
+never applied) and **Huginn Map 1.0.5** (now *loads* under Jotunn but its own map-share
+`Minimap.ReadExploredArray` + boat `ZoneSystem.m_activeArea` calls hit 1.0-removed game APIs, so
+its headline features are broken). Also evaluated + **disabled 2026-09-10: Favorite_Items 0.1.5**
+(Valheazy) — Ethan asked to add it optional, but it throws a TypeLoadException every FixedUpdate
+on 1.0 (missing inventory-UI type `Element`); a missing-type error hits clients too. Left as a
+commented/tracked line in `mods.manifest` (not shipped). A daily systemd job `hs-mod-check`
+emails Ethan when a disabled mod updates. Difficulty is vanilla/Normal, no world modifiers.
 
-**Gotchas:** VM is **4 cores** (was 3) — the extra core is headroom so a mod that pegs the
-game threads can't starve the guest agent (that locked it out on 2026-09-10; recover by
-`qm stop`/`qm set --cores`/`qm start`, then stop the container during boot). Do NOT leave
-DropThat `WriteDropTablesToFiles` enabled — it pegs the server on world start (use it briefly
-to dump prefab ids, then off). Full detail: [[valheim-1.0-mod-status]], [[valheim-server-ops]].
-Snapshot before mod/game changes (`qm snapshot 100 ...`).
+**"Will a disabled mod work now that its dep updated?" test recipe:** stage it as a `plugin`
+(server-side) in a scratch manifest, restart, and read `BepInEx/LogOutput.log` for the LATEST
+boot (log is appended across restarts — anchor on the last `Chainloader started`). A
+`TypeLoadException`/"could not be instantiated" at load = hard break (needs rebuild); a clean
+`Loading [..]` with no errors = loads; `Method/Field not found` warnings = it loads but uses
+game APIs 1.0 changed (functionally broken). Then restore + apply via `guests/vm-apply-valheim.sh`.
+This reading is now scripted — `valheim/verify-boot.sh [--wait N] [--mod Name]` slices the latest
+boot for you (plugins/errors/session, exit 0 = clean) — and the whole add/bump/remove flow is the
+**`/add-valheim-mod`** skill (see [[valheim-add-mod]]).
+
+**Gotchas:** VM is **6 cores** (was 4, was 3) — headroom so a mod/world-load that pegs the game
+threads can't starve the guest agent (agent went unresponsive again during a 2026-09-10 apply
+restart; bumped 4->6, host has 8. Recover: `qm shutdown --forceStop 1` (graceful ACPI still
+flushes the world save even with the agent down) `/ qm set --cores / qm start`, then the instant
+guest-exec answers on boot, `docker compose stop` to free CPU BEFORE staging, then start).
+**RAM:** alloc is **4 GiB fixed** (balloon off); host is only 7.1 GiB, so 4 GiB is the safe
+ceiling — bumping toward 5.5 would risk **host** OOM (which kills the whole VM), and the guest
+isn't RAM-pressured anyway (~1.7 GiB free, container ~2.2 GiB). The guest has a **1.5 GiB
+swapfile** (`/swapfile`, `vm.swappiness=10`) as an OOM cushion so a transient spike past 4 GiB
+degrades instead of crashing the server; it's config-as-code in `guests/cloud-init-valheim.yaml`
+(a rebuild reproduces it) and was applied live to the running VM to match. Do
+NOT leave DropThat `WriteDropTablesToFiles` enabled — it pegs the server on world start (use it
+briefly to dump prefab ids, then off).
+**Bumping a mod version:** `stage-mods` reuses a cached zip in the VM's `/srv/valheim/mod-cache/`
+if present, so a stale zip of the OLD version -> `SHA MISMATCH` on the new pin. `rm` that mod's
+`mod-cache/<Name>.zip` (there is no `dll/` dir in the VM; DLLs are downloaded+verified there).
+**Changing a Synced-with-Server mod cfg:** edit the `.cfg` while the server is **stopped**
+(`supervisorctl stop valheim-server`), else the still-running instance flushes its in-memory
+(old) value back over your edit on shutdown. Full detail: [[valheim-1.0-mod-status]],
+[[valheim-server-ops]]. Snapshot before mod/game changes (`qm snapshot 100 ...`).

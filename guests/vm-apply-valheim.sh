@@ -13,24 +13,16 @@ set -euo pipefail
 VMID="${VMID:-100}"
 VDIR="$(cd "$(dirname "$0")/../valheim" && pwd)"
 
-# run a command in the guest, print its stdout, return the GUEST's exit code
-gx() {
-  local out; out="$(qm guest exec "$VMID" --timeout "${GX_TIMEOUT:-60}" -- "$@")" || return 127
-  python3 - "$out" <<'PY'
-import sys,json
-d=json.loads(sys.argv[1]); sys.stdout.write(d.get("out-data","")); sys.stderr.write(d.get("err-data",""))
-sys.exit(int(d.get("exitcode",0) or 0))
-PY
-}
-push() {  # push <hostfile> <vmpath>
-  local b64; b64="$(base64 -w0 "$1")"
-  gx bash -c "install -d \"\$(dirname '$2')\"; echo '$b64' | base64 -d > '$2'" >/dev/null && echo "pushed $2"
-}
+# gx / gx_push: drive the guest over the QEMU agent (shared with verify-boot.sh etc.)
+# shellcheck source=../valheim/lib-gx.sh
+source "$VDIR/lib-gx.sh"
 
-qm agent "$VMID" ping >/dev/null 2>&1 || { echo "FATAL: VM $VMID guest agent not responding"; exit 1; }
+# Liveness via a trivial exec, NOT `qm agent ping` — ping false-negatives on this box (reports
+# "not running" while guest-exec works), and we don't want to refuse a deploy the agent can do.
+gx_ready || { echo "FATAL: VM $VMID guest agent not answering a trivial exec (ping is unreliable here)"; exit 1; }
 
 for f in docker-compose.yml mods.manifest stage-mods.sh drop_that.drop_table.cfg; do
-  push "$VDIR/$f" "/srv/valheim/$f"
+  gx_push "$VDIR/$f" "/srv/valheim/$f"
 done
 gx bash -c "chmod +x /srv/valheim/stage-mods.sh" >/dev/null
 
@@ -39,4 +31,4 @@ GX_TIMEOUT=180 gx bash -lc "cd /srv/valheim && ./stage-mods.sh"
 
 echo "== restarting container =="
 GX_TIMEOUT=120 gx bash -lc "cd /srv/valheim && docker compose restart"
-echo "done. watch: qm guest exec $VMID -- bash -lc \"docker logs --tail 40 valheim | grep -aE 'Loading \\[|join code'\""
+echo "done. verify once world-load settles (~1 min): sudo $(dirname "$0")/../valheim/verify-boot.sh --wait 60"

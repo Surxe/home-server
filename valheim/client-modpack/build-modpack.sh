@@ -6,8 +6,11 @@ set -euo pipefail
 HERE="$(cd "$(dirname "$0")" && pwd)"
 DLL="$HERE/../dll"
 OUT="${1:-/tmp/BaldurianQuat-modpack}"
-# Client-side set per SERVER-HANDOFF.md: required + FarmGrid (optional).
-CLIENT_DLLS=(Landoria.ModSentry.dll Jotunn.dll Huginn.dll GlassPieces.dll Valheim.DropThat.dll FarmGrid.dll)
+# Client-side set = mods.manifest required + optional (must match the server policy).
+# Valheim 1.0: ModSentry, DropThat, Jotunn, BetterCarts, OneMapToRuleThemAll (required)
+# + FarmGrid, FirstPersonMode (optional, 2026-09-11). GlassPieces and Huginn Map are
+# DISABLED on 1.0 (see ../mods.manifest) — not here.
+CLIENT_DLLS=(Landoria.ModSentry.dll Valheim.DropThat.dll Jotunn.dll BetterCarts.dll OneMapToRuleThemAll.dll FarmGrid.dll FirstPersonMode.dll)
 rm -rf "$OUT"; mkdir -p "$OUT/BepInEx/plugins"
 for d in "${CLIENT_DLLS[@]}"; do cp "$DLL/$d" "$OUT/BepInEx/plugins/$d"; done
 cp "$HERE/INSTALL.md" "$OUT/INSTALL.md"
