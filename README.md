@@ -7,7 +7,12 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
 ## Layout
 - `host/` — `/etc/network/interfaces`, wifi bring-up script, logind lid drop-in.
 - `systemd/` — `home-server-wifi.service` (wifi persistence), backup service/timer pairs,
-  `hs-mod-check.{service,timer}` (daily Valheim mod-update email), and `install.sh` (unit installer).
+  `hs-mod-check.{service,timer}` (daily Valheim mod-update email),
+  `hs-todo-classify.{service,timer}` (daily 13:00 CT todo classify + hub sync), and
+  `install.sh` (unit installer).
+- `todo/` — `classify-drain.sh`: this box is the hub + classifier for the shared cross-box
+  `todo` store (bare repo `/srv/dev/repos/todo.git` + working clone). See the
+  `todo-cross-box` memory note.
 - `backups/` — restic (flash + B2) and vzdump scripts, retention, `backup.env.example`.
 - `valheim/` — `docker-compose.yml`, mod manifest + `stage-mods.sh`, DropThat loot cfg,
   `check-mod-updates.sh` (Thunderstore poll) + `notify-mod-updates.sh` (email on change).
