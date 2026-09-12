@@ -1,0 +1,15 @@
+[Unit]
+Description=todo: sync hub, classify captures, publish meta (home-server)
+Documentation=https://github.com/Surxe/todo
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Runs as dev (owns the todo clone + the claude credentials in ~/.claude). HOME is
+# set so ~/.local/bin (claude) and dev's git identity resolve under systemd.
+User=dev
+Environment=HOME=/home/dev
+ExecStart=/srv/dev/repos/home-server/todo/classify-drain.sh
+# The model call can be slow; give it room beyond the 90s default.
+TimeoutStartSec=600

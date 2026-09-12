@@ -16,12 +16,13 @@ UNITS=(
   hs-restic-flash.service   hs-restic-flash.timer
   hs-vzdump-valheim.service hs-vzdump-valheim.timer
   hs-mod-check.service      hs-mod-check.timer
+  hs-todo-classify.service  hs-todo-classify.timer
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) We activate only the mod-check timer
 # here; the backup timers' enable-state is left to bootstrap.sh / the operator so this
 # installer never silently flips backup behaviour.
-TIMERS=(hs-mod-check.timer)
+TIMERS=(hs-mod-check.timer hs-todo-classify.timer)
 
 say "linking units into $UNIT_DIR"
 for u in "${UNITS[@]}"; do
@@ -32,7 +33,7 @@ for u in "${UNITS[@]}"; do
     echo "  skip (missing in repo): $u"
   fi
 done
-chmod +x "$REPO/valheim/notify-mod-updates.sh" "$REPO/valheim/check-mod-updates.sh" 2>/dev/null || true
+chmod +x "$REPO/valheim/notify-mod-updates.sh" "$REPO/valheim/check-mod-updates.sh" "$REPO/todo/classify-drain.sh" 2>/dev/null || true
 
 say "reload + enable timers"
 systemctl daemon-reload
