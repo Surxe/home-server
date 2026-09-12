@@ -18,20 +18,24 @@ pipe through python3 for `out-data`). World + config bind-mounted at `/srv/valhe
 `stage-mods.sh` (deploy mods to the VM), `check-mod-updates.sh` (poll Thunderstore),
 `hooks/sync-plugins.sh` (PRE_SERVER_RUN_HOOK so auto-updates keep mods loaded).
 
-**State (2026-09): on Valheim 1.0 (l-1.0.7, Unity 6).** Server plugins: **ModSentry 1.0.17 +
-DropThat 3.1.5 + Jotunn 2.30.0 + BetterCarts 1.1.1 + OneMapToRuleThemAll 2.8.0** (Jotunn/DropThat
-on their 1.0 builds; Jotunn 2.30.0 no longer crashes on connect). **BetterCarts** (TastyChickenLegs;
+**State (2026-09): on Valheim 1.0 (l-1.0.7, Unity 6).** Server plugins: **ModSentry 1.0.18 +
+DropThat 3.1.5 + Jotunn 2.30.0 + BetterCarts 1.1.1 + OneMapToRuleThemAll 2.8.1** (Jotunn/DropThat
+on their 1.0 builds; Jotunn 2.30.0 no longer crashes on connect). Bumped 2026-09-12: ModSentry
+1.0.17 -> 1.0.18 (Valheim 1.0 migration), OneMapToRuleThemAll 2.8.0 -> 2.8.1 (fixes .explored
+file pathing on the new 1.0 save format), FavoriteItems 1.1.0 -> 1.2.0 (optional ExtraSlots
+special-slot protection, off by default). **BetterCarts** (TastyChickenLegs;
 quick attach/detach, multi-player push, tunable cart weight/damage) `plugin+required`, deps only
 BepInEx. Bumped 1.1.0 -> **1.1.1** on 2026-09-10 (latest release) — tested to load CLEAN on 1.0
 (Harmony patches bind, its server ConfigSync RPC registers, no TypeLoad/MissingMethod). Its config
 (`/config/bepinex/TastyChickenLegs.BetterCarts.cfg`, NOT repo-managed) is **Synced with Server**;
 tuned 2026-09-10 (Ethan): `allowPlayersToHelp = true`, `maxPlayers = 4` (mod max), `includePuller
 = false`, `playerMassReduction = 0.25`.
-**OneMapToRuleThemAll 2.8.0** (DrummerCraig; shared map exploration/fog-of-war + player pins,
-optional client radar) added 2026-09-10 as `plugin+required` — server-authoritative (pushes config
+**OneMapToRuleThemAll 2.8.1** (DrummerCraig; shared map exploration/fog-of-war + player pins,
+optional client radar) added 2026-09-10 (2.8.0), bumped 2.8.0 -> 2.8.1 on 2026-09-12 (fixes
+.explored file pathing on the new 1.0 save format) as `plugin+required` — server-authoritative (pushes config
 to clients on connect), deps only BepInEx (not Jotunn). Unlike Huginn it loads CLEAN on 1.0:
 `58 Harmony patches applied, 0 skipped`, Fog/map-persistence init OK, no TypeLoad/Method-not-found.
-DLL + SHA committed; in the client pack as required. Config tuned 2026-09-10 (Ethan) in
+DLL + SHA committed; in the client docs as required. Config tuned 2026-09-10 (Ethan) in
 `/config/bepinex/drummercraig.one_map_to_rule_them_all.cfg` (server-synced, NOT repo-managed):
 **radar OFF for everyone** (`[Server._Global] 5. Radar = false` — one master gate kills radar for
 all creatures/ore/pickables/locations; the ~150 per-creature `_Vanilla.*.Radar` toggles are then
@@ -46,12 +50,13 @@ version needed). **FirstPersonMode 1.3.12 (Azumatt)** added 2026-09-11 as a seco
 preference, not server-loaded). Deps only BepInEx. Load-tested server-side on 1.0 before shipping
 (staged as `plugin`, restarted, log clean: `Loading [FirstPersonMode 1.3.12]` + its ConfigSync RPC
 registered, no TypeLoad/Method/Field errors), then restored to `optional`-only. DLL + SHA committed,
-added to the client pack + INSTALL docs. **FavoriteItems 1.1.0 (ronaldoniz)** added 2026-09-12
+added to the client docs + INSTALL docs. **FavoriteItems 1.2.0 (ronaldoniz)** added 2026-09-12
 as a third client-side **optional** mod (ModSentry_Optional; Alt-click marks inventory stacks as
 favorites — golden star, quick-stack protection via a public API). Deps only BepInEx. **Client-only
 by design** — `BepInProcess("valheim.exe")`, so BepInEx SKIPS it on the dedicated server; the
 server-side load-test is N/A. Built 2026-09-11 against BepInEx 5.4.2350 (the 1.0 pack); verified
-on a real client by Ethan 2026-09-12. Still **disabled** (both tested 2026-09-10 on
+on a real client by Ethan 2026-09-12. Bumped 1.1.0 -> 1.2.0 on 2026-09-12 (optional ExtraSlots
+1.2.3 special-slot protection via its public API, off by default). Still **disabled** (both tested 2026-09-10 on
 their current versions and NOT ok — need a real 1.0 rebuild, not just Jotunn):
 **GlassPieces 1.2.5** (still TypeLoadException/VTable on 1.0; depends only on BepInEx so Jotunn
 never applied) and **Huginn Map 1.0.5** (now *loads* under Jotunn but its own map-share

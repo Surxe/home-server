@@ -46,8 +46,8 @@
 # 2026-02-23) and broken on 1.0 (TypeLoadException: missing inventory-UI type 'Element').
 # Replaced by ronaldoniz/FavoriteItems (a different, actively-maintained 1.0 mod) - see below.
 #
-# Re-enable Huginn/GlassPieces — un-comment, bump version+SHA, re-stage, rebuild
-# the client pack, restart — once each ships a real 1.0 build. Track with ./check-mod-updates.sh.
+# Re-enable Huginn/GlassPieces — un-comment, bump version+SHA, re-stage, update the client
+# docs, restart — once each ships a real 1.0 build. Track with ./check-mod-updates.sh.
 # Disabled DLLs are preserved on the VM under /srv/valheim/config/_disabled_mods_20260909/.
 #
 # WARNING: do NOT leave DropThat's WriteDropTablesToFiles (drop_that.cfg [Debug]) enabled.
@@ -55,7 +55,9 @@
 # guest agent, requiring a hard reset. Enable it briefly to dump prefab ids, grab the
 # files from BepInEx/Debug/, then set it back to false. (Jotunn 2.30.0 itself is fine.)
 # ============================================================================
-ModSentry|1.0.17|Landoria.ModSentry.dll|3737e773d53c9eff761e5db84b4940a41c359e87fa5c7d57949da27b317aa027|plugin+required|https://thunderstore.io/package/download/Landoria/ModSentry/1.0.17/
+# ModSentry (Landoria): validates required/optional client mods. Bumped 1.0.17 -> 1.0.18 on
+# 2026-09-12 ("Migration to Valheim 1.0.x"). Deps: BepInEx only.
+ModSentry|1.0.18|Landoria.ModSentry.dll|95e3b87ba96cee945b33c313ad8b27251e3caa65e82277c79898092caac2ebdc|plugin+required|https://thunderstore.io/package/download/Landoria/ModSentry/1.0.18/
 Drop_That|3.1.5|Valheim.DropThat.dll|9b4c1718932f48eb2d1fe8e50973dccb53e9947bc5f9903b87d3da05ab5efaf4|plugin+required|https://thunderstore.io/package/download/ASharpPen/Drop_That/3.1.5/
 Jotunn|2.30.0|Jotunn.dll|51d32cfbe2db5c203ffb8855c155d185d572dda72db49066905679d8ec5e3c46|plugin+required|https://thunderstore.io/package/download/ValheimModding/Jotunn/2.30.0/
 FarmGrid|1.0.0|FarmGrid.dll|35f77dd50625c30cc4fe20d49ea1fbd7e05f76a64c97eb0588cecba827916519|optional|https://thunderstore.io/package/download/Galateam/FarmGrid/1.0.0/
@@ -72,7 +74,9 @@ FirstPersonMode|1.3.12|FirstPersonMode.dll|f942c253a38b667845935c6819e9f63e96064
 # Deps only BepInEx (5.4.2350 = the 1.0 pack); built 2026-09-11. Client-only by design
 # (BepInProcess valheim.exe): BepInEx SKIPS it on the dedicated server, so the server-side
 # load-test is N/A - the remaining check is a real-client smoke test (install + Alt-click).
-FavoriteItems|1.1.0|FavoriteItems.dll|be7c77ca17c907996266d80928d12950a412b85f398628b9ecc350a8204154f6|optional|https://thunderstore.io/package/download/ronaldoniz/FavoriteItems/1.1.0/
+# Bumped 1.1.0 -> 1.2.0 on 2026-09-12: optional ExtraSlots 1.2.3 special-slot protection via
+# its public API (NOT a required dependency; disabled by default).
+FavoriteItems|1.2.0|FavoriteItems.dll|acc41c9304952623c2024700245d3b723c25272f1f923737d53626d8d4caf22c|optional|https://thunderstore.io/package/download/ronaldoniz/FavoriteItems/1.2.0/
 # BetterCarts (TastyChickenLegs): quick attach/detach, up to 4 players push, tunable cart
 # weight/damage. Bumped 1.1.0 -> 1.1.1 on 2026-09-10 (latest Thunderstore release) and tested
 # on 1.0: loads CLEAN (Loading [BetterCarts 1.1.1]; its server ConfigSync RPC registers, no
@@ -83,9 +87,9 @@ BetterCarts|1.1.1|BetterCarts.dll|b647395b0c1f893acabe1c9305b202b020ce11a828691f
 # OneMapToRuleThemAll (DrummerCraig): shared map exploration (fog of war) + player map pins
 # across all players, optional client-side radar. Server-authoritative — pushes its config to
 # each client on connect — so it loads server-side AND every client must run it (matching hash):
-# plugin+required. Depends only on BepInEx, not Jotunn. Added 2026-09-10, latest release 2.8.0;
-# load-tested on 1.0 (see valheim-server memory for the result).
-OneMapToRuleThemAll|2.8.0|OneMapToRuleThemAll.dll|4898893d26e00b69b3e98de6269308809c6b185ade9d28a961f3429f04f90d3c|plugin+required|https://thunderstore.io/package/download/DrummerCraig/OneMapToRuleThemAll/2.8.0/
+# plugin+required. Depends only on BepInEx, not Jotunn. Added 2026-09-10 (2.8.0); bumped
+# 2.8.0 -> 2.8.1 on 2026-09-12 ("fixed .explored file pathing for the new 1.0 save format").
+OneMapToRuleThemAll|2.8.1|OneMapToRuleThemAll.dll|5537a49ea56f682d4d64b1e6d8f5b336bd1d947a310bfe0d73e0e3f3a483244c|plugin+required|https://thunderstore.io/package/download/DrummerCraig/OneMapToRuleThemAll/2.8.1/
 # --- DISABLED until each ships a Valheim 1.0 build (see note above) ---
 # (role shown = intended role once 1.0-ready.)
 # GlassPieces|1.2.5|GlassPieces.dll|7b0999da2ad436087132755f1ccdfde48b8c29f3c1198841792cbb54db51988a|required|https://thunderstore.io/package/download/blacks7ar/GlassPieces/1.2.5/

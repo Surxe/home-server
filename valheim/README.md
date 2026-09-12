@@ -79,6 +79,6 @@ reports "Huginn active".)
 - **Backups:** whole-VM vzdump runs on the host; the offsite **B2 world backup runs inside the
   VM** (`backup/valheim-b2-world.{service,timer}` + `../backups/restic-b2-world.sh`). See `../docs/03-backups.md`.
 - **Guest creation:** `../guests/create-valheim-vm.sh` + `cloud-init-valheim.yaml`.
-- **Client pack:** `client-modpack/` (what friends install; byte-identical to the policy).
+- **Client mods (docs):** `client-modpack/` (required/optional mod list + install guide; the server enforces the set via ModSentry).
 
 Authoritative mod manifest: Ethan's `valheim-mods/SERVER-HANDOFF.md`.

@@ -30,7 +30,7 @@ sessions. Not a roadmap — just notes so they aren't lost. Prune freely.
   resolve the Thunderstore namespace/name/version, pin it with its SHA-256 in
   `valheim/mods.manifest` (right `plugin`/`plugin+required`/`ModSentry_Optional` class),
   drop the DLL in `valheim/dll/`, run `stage-mods.sh`, decide client-side vs server-side +
-  the ModSentry policy folder, rebuild the client pack, apply with `vm-apply-valheim.sh`,
+  the ModSentry policy folder, update the client docs, apply with `vm-apply-valheim.sh`,
   restart, then confirm a clean load in `BepInEx/LogOutput.log`. A skill would encode that
   sequence (with the 1.0 load-test recipe from the valheim memory note) so a focused session
   can add a mod correctly without rediscovering the gotchas. Pairs with the mod-update
