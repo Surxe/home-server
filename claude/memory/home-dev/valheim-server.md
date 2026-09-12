@@ -63,6 +63,9 @@ boot (log is appended across restarts — anchor on the last `Chainloader starte
 `TypeLoadException`/"could not be instantiated" at load = hard break (needs rebuild); a clean
 `Loading [..]` with no errors = loads; `Method/Field not found` warnings = it loads but uses
 game APIs 1.0 changed (functionally broken). Then restore + apply via `guests/vm-apply-valheim.sh`.
+This reading is now scripted — `valheim/verify-boot.sh [--wait N] [--mod Name]` slices the latest
+boot for you (plugins/errors/session, exit 0 = clean) — and the whole add/bump/remove flow is the
+**`/add-valheim-mod`** skill (see [[valheim-add-mod]]).
 
 **Gotchas:** VM is **6 cores** (was 4, was 3) — headroom so a mod/world-load that pegs the game
 threads can't starve the guest agent (agent went unresponsive again during a 2026-09-10 apply

@@ -26,9 +26,11 @@ OPT="${CFG}/ModSentry_Optional"
 
 [ -d "$BEPINEX" ] || { echo "BepInEx tree missing ($BEPINEX). Start the server once (BEPINEX=true) first."; exit 1; }
 mkdir -p "$PLUGINS" "$REQ" "$OPT" "$CFG"
-# Clear prior staging so removed mods don't linger.
-rm -rf "$PLUGINS/ModSentry" "$PLUGINS/Drop_That" "$PLUGINS/Jotunn" "$PLUGINS/Huginn_Map" \
-       "$PLUGINS/GlassPieces" "$PLUGINS/FarmGrid"
+# Clear prior staging so removed mods don't linger. Wipe ALL plugin dirs (not a hand-kept
+# name list): a mod ever staged as a plugin — including a temporary load-test of a client-only
+# mod — must not survive into the runtime mirror below. $PLUGINS holds only our staged mods
+# (BepInEx core lives in the runtime tree, not here), so this is safe.
+rm -rf "${PLUGINS:?}"/*
 rm -f "$REQ"/*.dll "$OPT"/*.dll
 
 resolve_dll() {  # sets DLLPATH for name/dll/sha/url; verifies sha256
