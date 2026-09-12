@@ -21,7 +21,8 @@ echo "== home-server install =="
 # Installers to run, in order. Add more here as subsystems get their own installer.
 INSTALLERS=(
   "$REPO/systemd/install.sh"   # host systemd units (root)
-  "$REPO/claude/install.sh"    # dev's Claude context: CLAUDE.md, skills, memory (writes as dev)
+  "$REPO/claude/install.sh"    # dev's Claude context: box-local CLAUDE.md, skills, memory (writes as dev)
+  "$REPO/../dev-env/install.sh"  # shared dev config layer: portable skills/cc/memories (writes as dev)
 )
 
 for inst in "${INSTALLERS[@]}"; do
