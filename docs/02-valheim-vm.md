@@ -67,7 +67,7 @@ launcher, scheduled world backups, and mod loading. Key points to wire in:
 > `SynchronizeInitialData` -> `ZRoutedRpc.Everybody` not found), blocking all joins.
 > Jotunn + its dependents **Huginn Map** and **FarmGrid** are temporarily disabled
 > (moved to `/srv/valheim/config/_disabled_mods_20260909/` on the VM; commented out in
-> `valheim/mods.manifest`; dropped from the client pack). Active set: **ModSentry,
+> `valheim/mods.manifest`; dropped from the client docs). Active set: **ModSentry,
 > DropThat, GlassPieces**. Re-enable the Jotunn stack once Jotunn ships a 1.0 build —
 > Ethan will tell Claude when it does. Poll releases with `valheim/check-mod-updates.sh`.
 >

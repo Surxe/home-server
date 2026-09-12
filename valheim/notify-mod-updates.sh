@@ -91,7 +91,7 @@ lines += ["",
           "Checked at %s (UTC)." % data.get("checked_at", "?"),
           "Detail: run  valheim/check-mod-updates.sh  on the host.",
           "To adopt: bump version+SHA in valheim/mods.manifest (un-comment if disabled),",
-          "run stage-mods.sh, rebuild the client pack, restart the server."]
+          "run stage-mods.sh, update the client docs, restart the server."]
 
 msg = EmailMessage()
 msg["Subject"] = "[home-server] Valheim mod update(s) available (%d)" % len(candidates)

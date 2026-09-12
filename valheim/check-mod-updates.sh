@@ -154,7 +154,7 @@ else:
             print(f"  - {r['namespace']}/{r['name']}: {r['pinned']} -> {r['latest']} "
                   f"(updated {r['date_updated']}){tags}")
         print("\nTo adopt one: update its version + SHA-256 in mods.manifest (un-comment if")
-        print("disabled), run stage-mods.sh, rebuild the client pack, then restart. Client")
+        print("disabled), run stage-mods.sh, update the client docs, then restart. Client")
         print("mod DLLs must match the server policy exactly.")
     else:
         print("No mod has a newer version than what we run yet. Check again in a day or two.")
