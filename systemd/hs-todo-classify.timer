@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily todo classify + hub sync at 13:00 America/Chicago (CST/CDT)
+
+[Timer]
+# Timezone-qualified so it tracks 1pm Central regardless of the host's TZ or DST.
+OnCalendar=*-*-* 13:00:00 America/Chicago
+# Catch up after downtime (the box is a laptop that may be asleep/off at 1pm).
+Persistent=true
+
+[Install]
+WantedBy=timers.target

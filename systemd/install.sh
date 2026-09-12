@@ -21,13 +21,14 @@ UNITS=(
   hs-mod-announce.service        # agent-triggered, no timer (post a mod-set change diff)
   hs-valheim-status.service         hs-valheim-status.timer
   hs-valheim-status-edge.service    hs-valheim-status-edge.timer
+  hs-todo-classify.service      hs-todo-classify.timer
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) We activate only the mod-check timer
 # here; the backup timers' enable-state is left to bootstrap.sh / the operator so this
 # installer never silently flips backup behaviour.
 TIMERS=(hs-mod-check.timer hs-mod-check-discord.timer hs-mod-list.timer \
-        hs-valheim-status.timer hs-valheim-status-edge.timer)
+        hs-valheim-status.timer hs-valheim-status-edge.timer hs-todo-classify.timer)
 
 say "linking units into $UNIT_DIR"
 for u in "${UNITS[@]}"; do
@@ -40,7 +41,8 @@ for u in "${UNITS[@]}"; do
 done
 chmod +x "$REPO/valheim/notify-mod-updates.sh" "$REPO/valheim/notify-mod-updates-discord.sh" \
          "$REPO/valheim/check-mod-updates.sh" "$REPO/valheim/server-status-discord.sh" \
-         "$REPO/valheim/list-installed-mods.sh" "$REPO/valheim/announce-mod-change.sh" 2>/dev/null || true
+         "$REPO/valheim/list-installed-mods.sh" "$REPO/valheim/announce-mod-change.sh" \
+         "$REPO/todo/classify-drain.sh" 2>/dev/null || true
 
 # Seed the mod-change announcer's baseline to the CURRENT set on first install, so the
 # first real announcement diffs against today's set instead of posting every installed
