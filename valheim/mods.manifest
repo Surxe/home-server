@@ -42,15 +42,11 @@
 #       of GlassPieces.Functions.Collector/SliderSwitch) on 1.0. It depends ONLY on
 #       BepInEx, not Jotunn, so the Jotunn update never applied to it — needs a rebuild.
 #
-# 2026-09-10: evaluated Favorite_Items (Valheazy) for the pack as an optional client mod.
-# DISABLED — broken on 1.0. It loads and reads its config, but its FixedUpdate throws a
-# TypeLoadException every physics tick ("Could not resolve type ... expected class 'Element'")
-# — it references an inventory-UI type 1.0 removed/renamed. A missing-type error like this is
-# independent of runtime state, so it fails on clients too, not just the headless server.
-# Deps only BepInEx; needs a real 1.0 rebuild. Listed below (commented) so check-mod-updates
-# flags it when Valheazy ships a new version.
+# 2026-09-12: DROPPED Favorite_Items (Valheazy) - abandoned (still 0.1.5, last release
+# 2026-02-23) and broken on 1.0 (TypeLoadException: missing inventory-UI type 'Element').
+# Replaced by ronaldoniz/FavoriteItems (a different, actively-maintained 1.0 mod) - see below.
 #
-# Re-enable Huginn/GlassPieces/Favorite_Items — un-comment, bump version+SHA, re-stage, rebuild
+# Re-enable Huginn/GlassPieces — un-comment, bump version+SHA, re-stage, rebuild
 # the client pack, restart — once each ships a real 1.0 build. Track with ./check-mod-updates.sh.
 # Disabled DLLs are preserved on the VM under /srv/valheim/config/_disabled_mods_20260909/.
 #
@@ -68,8 +64,15 @@ FarmGrid|1.0.0|FarmGrid.dll|35f77dd50625c30cc4fe20d49ea1fbd7e05f76a64c97eb0588ce
 # depends only on BepInEx (not Jotunn). optional: each player who wants it installs+configures
 # it themselves; ModSentry allows-but-doesn't-require it. Added 2026-09-11, latest release
 # 1.3.12 (actively maintained through 1.0). Load-tested server-side on 1.0: loads CLEAN (no
-# TypeLoad/Harmony/dependency errors), so it won't break clients that run it (cf. Favorite_Items).
+# TypeLoad/Harmony/dependency errors), so it won't break clients that run it (cf. the dropped Valheazy Favorite_Items).
 FirstPersonMode|1.3.12|FirstPersonMode.dll|f942c253a38b667845935c6819e9f63e9606499af6775c3533b98d9e9761e791|optional|https://thunderstore.io/package/download/Azumatt/FirstPersonMode/1.3.12/
+# FavoriteItems (ronaldoniz): Alt-click to mark inventory stacks as favorites, with a public
+# API + quick-stack integrations. Client-side optional mod (ModSentry_Optional) - each player
+# who wants it installs it; replaces the abandoned/broken Valheazy/Favorite_Items (0.1.5).
+# Deps only BepInEx (5.4.2350 = the 1.0 pack); built 2026-09-11. Client-only by design
+# (BepInProcess valheim.exe): BepInEx SKIPS it on the dedicated server, so the server-side
+# load-test is N/A - the remaining check is a real-client smoke test (install + Alt-click).
+FavoriteItems|1.1.0|FavoriteItems.dll|be7c77ca17c907996266d80928d12950a412b85f398628b9ecc350a8204154f6|optional|https://thunderstore.io/package/download/ronaldoniz/FavoriteItems/1.1.0/
 # BetterCarts (TastyChickenLegs): quick attach/detach, up to 4 players push, tunable cart
 # weight/damage. Bumped 1.1.0 -> 1.1.1 on 2026-09-10 (latest Thunderstore release) and tested
 # on 1.0: loads CLEAN (Loading [BetterCarts 1.1.1]; its server ConfigSync RPC registers, no
@@ -84,7 +87,6 @@ BetterCarts|1.1.1|BetterCarts.dll|b647395b0c1f893acabe1c9305b202b020ce11a828691f
 # load-tested on 1.0 (see valheim-server memory for the result).
 OneMapToRuleThemAll|2.8.0|OneMapToRuleThemAll.dll|4898893d26e00b69b3e98de6269308809c6b185ade9d28a961f3429f04f90d3c|plugin+required|https://thunderstore.io/package/download/DrummerCraig/OneMapToRuleThemAll/2.8.0/
 # --- DISABLED until each ships a Valheim 1.0 build (see note above) ---
-# (role shown = intended role once 1.0-ready: Favorite_Items would be an optional client mod.)
+# (role shown = intended role once 1.0-ready.)
 # GlassPieces|1.2.5|GlassPieces.dll|7b0999da2ad436087132755f1ccdfde48b8c29f3c1198841792cbb54db51988a|required|https://thunderstore.io/package/download/blacks7ar/GlassPieces/1.2.5/
 # Huginn_Map|1.0.5|Huginn.dll|1108fec508f9096efbb73aa032ba72502cc92eefe7829bd614587fd4395fcfcd|plugin+required|https://thunderstore.io/package/download/NightOfGames/Huginn_Map/1.0.5/
-# Favorite_Items|0.1.5|favoriteItems.dll|c2d5e835e854cb3fc2d41498f4bb7575789e065ead112d3cb5ff549c4f02de5c|optional|https://thunderstore.io/package/download/Valheazy/Favorite_Items/0.1.5/
