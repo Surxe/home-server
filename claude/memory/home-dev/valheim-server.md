@@ -46,15 +46,20 @@ version needed). **FirstPersonMode 1.3.12 (Azumatt)** added 2026-09-11 as a seco
 preference, not server-loaded). Deps only BepInEx. Load-tested server-side on 1.0 before shipping
 (staged as `plugin`, restarted, log clean: `Loading [FirstPersonMode 1.3.12]` + its ConfigSync RPC
 registered, no TypeLoad/Method/Field errors), then restored to `optional`-only. DLL + SHA committed,
-added to the client pack + INSTALL docs. Still **disabled** (both tested 2026-09-10 on
+added to the client pack + INSTALL docs. **FavoriteItems 1.1.0 (ronaldoniz)** added 2026-09-12
+as a third client-side **optional** mod (ModSentry_Optional; Alt-click marks inventory stacks as
+favorites — golden star, quick-stack protection via a public API). Deps only BepInEx. **Client-only
+by design** — `BepInProcess("valheim.exe")`, so BepInEx SKIPS it on the dedicated server; the
+server-side load-test is N/A. Built 2026-09-11 against BepInEx 5.4.2350 (the 1.0 pack); verified
+on a real client by Ethan 2026-09-12. Still **disabled** (both tested 2026-09-10 on
 their current versions and NOT ok — need a real 1.0 rebuild, not just Jotunn):
 **GlassPieces 1.2.5** (still TypeLoadException/VTable on 1.0; depends only on BepInEx so Jotunn
 never applied) and **Huginn Map 1.0.5** (now *loads* under Jotunn but its own map-share
 `Minimap.ReadExploredArray` + boat `ZoneSystem.m_activeArea` calls hit 1.0-removed game APIs, so
-its headline features are broken). Also evaluated + **disabled 2026-09-10: Favorite_Items 0.1.5**
-(Valheazy) — Ethan asked to add it optional, but it throws a TypeLoadException every FixedUpdate
-on 1.0 (missing inventory-UI type `Element`); a missing-type error hits clients too. Left as a
-commented/tracked line in `mods.manifest` (not shipped). A daily systemd job `hs-mod-check`
+its headline features are broken). **Favorite_Items 0.1.5 (Valheazy) DROPPED 2026-09-12** —
+abandoned (last release 2026-02-23) and throws a TypeLoadException every FixedUpdate on 1.0
+(missing inventory-UI type `Element`); superseded by ronaldoniz/FavoriteItems (see above). A daily
+systemd job `hs-mod-check`
 emails Ethan when a disabled mod updates. Difficulty is vanilla/Normal, no world modifiers.
 
 **"Will a disabled mod work now that its dep updated?" test recipe:** stage it as a `plugin`

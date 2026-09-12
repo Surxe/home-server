@@ -35,7 +35,7 @@ sudo qm snapshot 100 pre_<mod>_<yyyymmdd> --description "..."
 
 ## 4. Load-test on 1.0 (the important gate)
 A mod that throws a `TypeLoadException` on 1.0 breaks clients too, not just the server (cf.
-Favorite_Items). So confirm it loads clean **before** shipping — even a client-only mod:
+the dropped Valheazy Favorite_Items). So confirm it loads clean **before** shipping — even a client-only mod:
 temporarily give the line role `plugin` (a scratch edit), apply, then check the latest boot.
 ```
 sudo guests/vm-apply-valheim.sh          # push + stage + restart
@@ -45,6 +45,13 @@ sudo valheim/verify-boot.sh --wait 55 --mod <DisplayName>
 name). Clean = its `Loading [..]` line present, no `TypeLoad/Method/Field/Exception`. If it
 fails, roll back (`qm rollback 100 <snap>`) — do not ship. Then revert the scratch role to its
 real value. (`stage-mods.sh` wipes all plugin dirs each run, so a leftover test plugin can't linger.)
+
+**Client-only mod that sets `BepInProcess("valheim.exe")`** (e.g. ronaldoniz/FavoriteItems): BepInEx
+logs `Skipping [X ...] because of process filters (valheim.exe)` and never emits a `Loading [..]`
+line on the server. That's EXPECTED, not a load failure — such a mod can't load server-side by
+design, so the `Loading [..]` gate is N/A. Treat "Skipping ... process filters" as clean (not a
+TypeLoad/Method/Field error); the real gate is a client smoke test. Keep its role `optional`
+(client-side), not `plugin`.
 
 ## 5. Apply the real config + verify
 ```
