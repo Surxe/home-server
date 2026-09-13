@@ -18,19 +18,39 @@ join (or if you clear the saved entry).
 | Mod | Version | Thunderstore package | Install? |
 |---|---|---|---|
 | BepInEx pack | 5.4.2350 | denikson / BepInExPack_Valheim | ✅ dependency |
-| ModSentry | 1.0.18 | Landoria / ModSentry | ✅ required |
+| ModSentry | 1.0.19 | Landoria / ModSentry | ✅ required |
 | Drop That | 3.1.5 | ASharpPen / Drop_That | ✅ required |
 | Jotunn (library) | 2.30.0 | ValheimModding / Jotunn | ✅ required |
 | BetterCarts | 1.1.1 | TastyChickenLegs / BetterCarts | ✅ required |
 | OneMapToRuleThemAll | 2.8.1 | DrummerCraig / OneMapToRuleThemAll | ✅ required |
+| GlassPieces | 1.2.7 | blacks7ar / GlassPieces | ✅ required |
 | FarmGrid | 1.0.0 | Galateam / FarmGrid | ➖ optional |
 | FirstPersonMode | 1.3.12 | Azumatt / FirstPersonMode | ➖ optional |
-| FavoriteItems | 1.1.0 | ronaldoniz / FavoriteItems | ➖ optional |
-| GlassPieces | 1.2.5 | blacks7ar / GlassPieces | ❌ skip — crashes on 1.0 |
+| FavoriteItems | 1.2.0 | ronaldoniz / FavoriteItems | ➖ optional |
+| Unshamed | 1.0.4 | Azumatt / Unshamed | ➖ optional (achievements) |
 
 **Install?** ✅ required = you're kicked without it. ➖ optional = client-side preference,
-install it or not, either way you can join. ❌ skip = do not install (breaks on 1.0). The
-authoritative manifest the server enforces is `../mods.manifest`.
+install it or not, either way you can join. The authoritative manifest the server enforces is
+`../mods.manifest`.
+
+### Achievements (Unshamed — optional)
+
+Valheim 1.0 refuses Steam achievements to anyone running mods, so playing here normally blocks
+them. **Unshamed** (Azumatt) unblocks them locally — install it if you want achievements while
+playing on BaldurianQuat. It's **client-side and personal**: it changes nothing on the server or
+for other players, and it does **not** grant free unlocks (you still have to actually do the thing;
+spawned/cheated items are still flagged as cheated by the game as normal).
+
+After installing, open its config (`BepInEx/config/Azumatt.Unshamed.cfg`, generated on first
+launch — or edit it in r2modman's config editor) and set:
+
+```
+Enable Retroactive = true
+```
+
+That grants the achievements you'd **already earned** (once, on the next load). Leave it off and
+you'll only start banking achievements from that point forward. Steam only — Xbox/Game Pass use a
+separate achievement system this doesn't affect.
 
 ---
 
