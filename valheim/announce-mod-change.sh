@@ -63,9 +63,17 @@ esac
 [ -f "$MANIFEST" ] || { echo "manifest not found: $MANIFEST" >&2; exit 1; }
 
 python3 - "$MODE" "$MANIFEST" "$STATE_FILE" <<'PY'
-import sys, os, json, datetime, urllib.request, urllib.error
+import sys, os, json, datetime, re, urllib.request, urllib.error
 
 mode, manifest, state_file = sys.argv[1], sys.argv[2], sys.argv[3]
+
+def ts_page(url):
+    # manifest url is a download link:
+    #   https://thunderstore.io/package/download/<NS>/<NAME>/<VER>/
+    # turn it into the Valheim package page:
+    #   https://thunderstore.io/c/valheim/p/<NS>/<NAME>/
+    m = re.search(r"thunderstore\.io/package/download/([^/]+)/([^/]+)/", url or "")
+    return "https://thunderstore.io/c/valheim/p/%s/%s/" % (m.group(1), m.group(2)) if m else None
 
 def role_label(role_field):
     roles = role_field.lower().split("+")
@@ -86,7 +94,9 @@ with open(manifest) as f:
         if len(parts) < 6:
             continue
         name, version, role = parts[0], parts[1], role_label(parts[4])
-        current[name] = {"version": version, "role": role}
+        # Persist the Thunderstore page URL into the baseline too, so a later REMOVAL
+        # (which only has the old baseline to go on) can still be hyperlinked.
+        current[name] = {"version": version, "role": role, "url": ts_page(parts[5])}
 
 # Baseline (last announced). Missing/corrupt -> {} (treated as first announcement).
 try:
@@ -136,6 +146,12 @@ footer = "%d mods now installed — required=%d, optional=%d, server-only=%d" % 
 # Removed entries come from the OLD baseline; tolerate a legacy flat "name: version".
 def rv(d): return d["version"] if isinstance(d, dict) else d
 def rr(d): return d.get("role", "?") if isinstance(d, dict) else "?"
+def ru(d): return d.get("url") if isinstance(d, dict) else None
+
+# Bold mod name, hyperlinked to its Thunderstore page when we have the URL. A legacy
+# baseline (pre-URL) yields no link — just the bold name — which self-heals on next save.
+def name_md(name, url):
+    return "[**%s**](%s)" % (name, url) if url else "**%s**" % name
 
 # --- render a human summary (used by dry-run and printed alongside a post) ---
 def human():
@@ -177,16 +193,16 @@ def field(title, lines):
 fields = []
 if added:
     fields.append(field("Added (%d)" % len(added),
-        ["• **%s** `%s` — _%s_" % (n, d["version"], d["role"]) for n, d in added]))
+        ["• %s `%s` — _%s_" % (name_md(n, d.get("url")), d["version"], d["role"]) for n, d in added]))
 if updated:
     fields.append(field("Updated (%d)" % len(updated),
-        ["• **%s** `%s` → `%s` — _%s_" % (n, ov, nv, r) for n, ov, nv, r in updated]))
+        ["• %s `%s` → `%s` — _%s_" % (name_md(n, current[n].get("url")), ov, nv, r) for n, ov, nv, r in updated]))
 if role_changed:
     fields.append(field("Role changed (%d)" % len(role_changed),
-        ["• **%s** `%s` — _%s_ → _%s_" % (n, v, o, r) for n, v, o, r in role_changed]))
+        ["• %s `%s` — _%s_ → _%s_" % (name_md(n, current[n].get("url")), v, o, r) for n, v, o, r in role_changed]))
 if removed:
     fields.append(field("Removed (%d)" % len(removed),
-        ["• **%s** `%s` — _was %s_" % (n, rv(d), rr(d)) for n, d in removed]))
+        ["• %s `%s` — _was %s_" % (name_md(n, ru(d)), rv(d), rr(d)) for n, d in removed]))
 
 now = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 payload = {

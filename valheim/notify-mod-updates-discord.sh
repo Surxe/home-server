@@ -70,13 +70,17 @@ if not WEBHOOK:
     print("mod-notify-discord: would have posted about: %s" % sig, file=sys.stderr)
     sys.exit(1)
 
+# Thunderstore package page (masked link works in embed field/description text).
+def ts_page(m):
+    return "https://thunderstore.io/c/valheim/p/%s/%s/" % (m["namespace"], m["name"])
+
 lines = ["**Not installed yet** — a newer version exists on Thunderstore; the server is "
          "unchanged until someone applies it.", ""]
 for m in candidates:
     tag = "  `post-1.0`" if "*" in (m.get("status") or "") else ""
     dis = "  *(disabled — waiting on this)*" if m.get("disabled") else ""
-    lines.append("• **%s/%s** — running `%s`, available `%s` (published %s)%s%s"
-                 % (m["namespace"], m["name"], m["pinned"], m["latest"],
+    lines.append("• **[%s/%s](%s)** — running `%s`, available `%s` (published %s)%s%s"
+                 % (m["namespace"], m["name"], ts_page(m), m["pinned"], m["latest"],
                     m.get("date_updated"), tag, dis))
 
 ready = [m for m in candidates if m.get("disabled") and "*" in (m.get("status") or "")]
@@ -84,7 +88,7 @@ if ready:
     lines.append("")
     lines.append("__Re-enable candidates__ — a mod disabled for 1.0 shipped a post-1.0 build:")
     for m in ready:
-        lines.append("• %s %s" % (m["name"], m["latest"]))
+        lines.append("• [%s](%s) %s" % (m["name"], ts_page(m), m["latest"]))
     if any(m["name"].lower().startswith("jotunn") for m in ready):
         lines.append("Jotunn is ready → the whole Jotunn stack (Jotunn/Huginn/FarmGrid) can likely come back.")
 
