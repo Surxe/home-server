@@ -35,8 +35,24 @@ sys.exit(int(d.get("exitcode", 0) or 0))
 PY
 }
 
-gx_push() {  # gx_push <hostfile> <vmpath>
-  local b64; b64="$(base64 -w0 "$1")"
-  gx bash -c "install -d \"\$(dirname '$2')\"; echo '$b64' | base64 -d > '$2'" >/dev/null \
-    && echo "pushed $2"
+gx_push() {  # gx_push <hostfile> <vmpath> — copy a host file into the guest (base64 over the agent)
+  local src="$1" dst="$2" b64 len i=0 tmp
+  # Chunk the base64 so no single arg exceeds Linux MAX_ARG_STRLEN (128 KiB) — a large cfg
+  # (e.g. the 110 KB OneMap cfg -> ~147 KB base64) blows past it as one arg ("Argument list
+  # too long"). base64's alphabet has no shell metachars, so single-quoting each chunk is safe.
+  local step=90000
+  b64="$(base64 -w0 "$src")"; len=${#b64}
+  gx bash -c "install -d \"\$(dirname '$dst')\"" >/dev/null || return 1
+  if (( len <= step )); then
+    gx bash -c "echo '$b64' | base64 -d > '$dst'" >/dev/null && echo "pushed $dst"
+    return
+  fi
+  tmp="$dst.b64.$$"
+  gx bash -c ": > '$tmp'" >/dev/null || return 1
+  while (( i < len )); do
+    gx bash -c "printf %s '${b64:i:step}' >> '$tmp'" >/dev/null \
+      || { gx bash -c "rm -f '$tmp'" >/dev/null; return 1; }
+    (( i += step ))
+  done
+  gx bash -c "base64 -d '$tmp' > '$dst' && rm -f '$tmp'" >/dev/null && echo "pushed $dst"
 }

@@ -18,12 +18,26 @@ pipe through python3 for `out-data`). World + config bind-mounted at `/srv/valhe
 `stage-mods.sh` (deploy mods to the VM), `check-mod-updates.sh` (poll Thunderstore),
 `hooks/sync-plugins.sh` (PRE_SERVER_RUN_HOOK so auto-updates keep mods loaded).
 
-**State (2026-09): on Valheim 1.0 (l-1.0.7, Unity 6).** Server plugins: **ModSentry 1.0.18 +
-DropThat 3.1.5 + Jotunn 2.30.0 + BetterCarts 1.1.1 + OneMapToRuleThemAll 2.8.1** (Jotunn/DropThat
-on their 1.0 builds; Jotunn 2.30.0 no longer crashes on connect). Bumped 2026-09-12: ModSentry
+**State (2026-09): on Valheim 1.0 (l-1.0.7, Unity 6).** Server plugins: **ModSentry 1.0.19 +
+DropThat 3.1.5 + Jotunn 2.30.0 + BetterCarts 1.1.1 + OneMapToRuleThemAll 2.8.1 + GlassPieces 1.2.7**
+(Jotunn/DropThat on their 1.0 builds; Jotunn 2.30.0 no longer crashes on connect). Bumped 2026-09-12: ModSentry
 1.0.17 -> 1.0.18 (Valheim 1.0 migration), OneMapToRuleThemAll 2.8.0 -> 2.8.1 (fixes .explored
 file pathing on the new 1.0 save format), FavoriteItems 1.1.0 -> 1.2.0 (optional ExtraSlots
-special-slot protection, off by default). **BetterCarts** (TastyChickenLegs;
+special-slot protection, off by default).
+**Bumped/added 2026-09-13:** ModSentry 1.0.18 -> **1.0.19** (auto-creates the ModSentry_Required/_Optional
+folders at startup). **GlassPieces RE-ENABLED at 1.2.7** as `plugin+required` — blacks7ar finally shipped a
+1.0 build (v1.2.6 "updated for valheim 1.0 deepnorth" cleared the old TypeLoadException, v1.2.7 fixed a
+double-entry recipe); verified to load CLEAN on 1.0 (`Loading [GlassPieces 1.2.7]`, 0 errors). Content mod
+(63 build pieces + a minable resource + collector; ServerSync + registers prefabs) so it loads server-side
+AND every client must match — role corrected from the old disabled line's `required`-only to plugin+required.
+NB per its v1.2.7 changelog the stale `/config/bepinex/blacks7ar.GlassPieces.cfg` must be deleted on apply so
+the recipe fix takes (done; it regenerates). **Unshamed 1.0.4 (Azumatt)** added as a client-side **optional**
+mod (ModSentry_Optional) — re-enables Steam achievements for players on our mods (patches the client
+`Achievements.CanGetAchievements` to ignore the modded/cheat flags; does NOT touch the vanilla
+`s_bypassCheatChecks` bypass, so spawned items stay flagged as normal). CLIENT-SIDE ONLY (no ServerSync,
+nothing server-side): its `Azumatt.Unshamed.cfg` is per-client, NOT server-synced — can't be set server-side.
+Per-client config `Enable Retroactive = true` grants already-earned achievements once; documented in
+`client-modpack/INSTALL.md`. Steam-only (Xbox/Game Pass have their own achievement system). See [[valheim-add-mod]]. **BetterCarts** (TastyChickenLegs;
 quick attach/detach, multi-player push, tunable cart weight/damage) `plugin+required`, deps only
 BepInEx. Bumped 1.1.0 -> **1.1.1** on 2026-09-10 (latest release) — tested to load CLEAN on 1.0
 (Harmony patches bind, its server ConfigSync RPC registers, no TypeLoad/MissingMethod). Its config
