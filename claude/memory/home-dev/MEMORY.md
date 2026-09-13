@@ -4,6 +4,7 @@ Curated, repo-maintained memory for the home-server box, installed from
 `home-server/claude/memory/home-dev/`. One line per memory; read the note you need.
 (More memories to come — networking, backups, host/Proxmox — as they're written.)
 
+- [Active box](active-box.md) — you're on the home server (Proxmox host); box-local memory = box identity
 - [Valheim server](valheim-server.md) — modded Valheim dedicated server (VM 100); drive via `qm guest exec`; on 1.0 with a reduced mod set
 - [DropThat prefab dump](dropthat-prefab-dump.md) — how to dump prefab/drop-table ids safely (enable → generate → STOP, or it hogs the VM)
 - [Memories live in this repo](memories-live-in-this-repo.md) — write/edit home-server memories in claude/memory/home-dev/, then install.sh — never live in ~/.agents
