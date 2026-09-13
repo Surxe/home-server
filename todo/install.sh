@@ -41,9 +41,13 @@ if as_dev test -d "$TODO_STORE_DIR/.git"; then
   else
     as_dev git -C "$TODO_STORE_DIR" remote add hub "$TODO_STORE_HUB"
   fi
+  # Ensure master tracks hub/master (a `git init`-seeded clone lacks this). sync_push
+  # no longer relies on an upstream, but set it for clean `git pull`/status ergonomics.
+  as_dev git -C "$TODO_STORE_DIR" fetch -q hub 2>/dev/null || true
+  as_dev git -C "$TODO_STORE_DIR" branch --set-upstream-to=hub/master master 2>/dev/null || true
   say "todo-store 'hub' remote -> $TODO_STORE_HUB"
 elif as_dev test -d "$TODO_STORE_HUB"; then
-  as_dev git clone -q "$TODO_STORE_HUB" "$TODO_STORE_DIR" && say "cloned todo-store from $TODO_STORE_HUB"
+  as_dev git clone -o hub -q "$TODO_STORE_HUB" "$TODO_STORE_DIR" && say "cloned todo-store from $TODO_STORE_HUB"
 else
   say "todo-store: neither clone nor bare present — create the store hub first"
 fi
