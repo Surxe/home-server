@@ -7,7 +7,7 @@ Documentation=https://github.com/Surxe/todo
 # — so this fires hs-todo-sync.service after each local change (classify meta, or a
 # `done`/`reopen`/`rm` marked on this box). Watching the reflog catches all commits
 # regardless of loose/packed refs. Mirrors the workstation's dev todo-sync.path.
-PathModified=/srv/dev/repos/todo/.git/logs/HEAD
+PathModified=/srv/dev/repos/todo-store/.git/logs/HEAD
 Unit=hs-todo-sync.service
 
 [Install]
