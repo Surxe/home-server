@@ -18,6 +18,17 @@ REPO="$(cd "$(dirname "$0")" && pwd)"
 
 echo "== home-server install =="
 
+# Refresh the shared dev-env clone first so this box deploys the latest shared
+# layer (a stale clone silently ships old fragments — e.g. missing the ds/key
+# export). Pull as dev to keep the clone dev-owned; warn and continue on error.
+if [ -d "$REPO/../dev-env/.git" ]; then
+  if runuser -u dev -- git -C "$REPO/../dev-env" pull --ff-only; then
+    echo ">> dev-env clone updated"
+  else
+    echo "!! dev-env clone update failed — continuing with existing checkout" >&2
+  fi
+fi
+
 # Installers to run, in order. Add more here as subsystems get their own installer.
 INSTALLERS=(
   "$REPO/systemd/install.sh"   # host systemd units (root)
