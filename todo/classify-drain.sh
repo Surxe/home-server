@@ -20,8 +20,15 @@ TODO="$TODO_DIR/bin/todo"
 branch="$(git -C "$TODO_DIR" symbolic-ref --short -q HEAD || echo master)"
 
 # Pull workstation captures/status from the hub (local bare repo on this box).
-git -C "$TODO_DIR" pull --rebase --quiet hub "$branch" 2>/dev/null \
-    || echo "classify-drain: hub pull failed (continuing with local state)" >&2
+# On failure, ABORT the rebase before continuing — otherwise a conflict leaves the
+# checkout mid-rebase with conflict markers written into status.jsonl, which then
+# breaks `classify` (jq chokes on the markers). Mirrors bin/todo's sync_pull. With
+# the todo repo's `status.jsonl merge=union` this should no longer conflict, but
+# the abort keeps a bad pull non-fatal regardless.
+if ! git -C "$TODO_DIR" pull --rebase --quiet hub "$branch" 2>/dev/null; then
+    git -C "$TODO_DIR" rebase --abort 2>/dev/null || true
+    echo "classify-drain: hub pull failed (continuing with local state)" >&2
+fi
 
 # Classify locally. TODO_CLASSIFY_REMOTE must stay UNSET here, or this would try to
 # bounce back to itself; the service/ssh environments deliberately omit it.

@@ -8,11 +8,16 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
 - `host/` — `/etc/network/interfaces`, wifi bring-up script, logind lid drop-in.
 - `systemd/` — `home-server-wifi.service` (wifi persistence), backup service/timer pairs,
   `hs-mod-check.{service,timer}` (daily Valheim mod-update email),
-  `hs-todo-classify.{service,timer}` (daily 13:00 CT todo classify + hub sync), and
+  `hs-todo-classify.{service,timer}` (daily 13:00 CT todo classify + hub sync),
+  `hs-todo-sync.{service,path}` (push this box's todo commits to the hub on each
+  commit — event-driven, the home-server twin of the workstation's todo-sync.path), and
   `install.sh` (unit installer).
-- `todo/` — `classify-drain.sh`: this box is the hub + classifier for the shared cross-box
-  `todo` store (bare repo `/srv/dev/repos/todo.git` + working clone). See the
-  `todo-cross-box` memory note.
+- `todo/` — this box is the hub + classifier for the shared cross-box `todo` store
+  (bare repo `/srv/dev/repos/todo.git` + working clone). `classify-drain.sh` runs the
+  classify job; `hub-post-receive.sh` is the hub's post-receive hook that fans each
+  push out to the workstation (best-effort ssh pull, inert until a `todo-workstation`
+  reverse-ssh alias exists in dev's ~/.ssh). See the `todo-cross-box` memory note and
+  the todo repo's README (Cross-box) for the full sync design.
 - `backups/` — restic (flash + B2) and vzdump scripts, retention, `backup.env.example`.
 - `valheim/` — `docker-compose.yml`, mod manifest + `stage-mods.sh`, DropThat loot cfg,
   `check-mod-updates.sh` (Thunderstore poll) + `notify-mod-updates.sh` (email on change).

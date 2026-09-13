@@ -1,0 +1,19 @@
+[Unit]
+Description=todo: publish local commits to the shared hub (home-server)
+Documentation=https://github.com/Surxe/todo
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+# Runs as dev (owns the todo clone + the 'todo-hub' ssh key). HOME is set so dev's
+# git identity and ~/.ssh resolve under systemd. `todo sync` is best-effort: an
+# unreachable hub warns and keeps local state, so this never fails a commit. This
+# is the home-server counterpart of the workstation's dev todo-sync.service; it is
+# triggered by hs-todo-sync.path on every local commit (push-on-commit), so a
+# `done` marked on this box reaches the hub immediately instead of waiting for the
+# daily classify run.
+User=dev
+Environment=HOME=/home/dev
+ExecStart=/srv/dev/repos/todo/bin/todo sync
+TimeoutStartSec=120
