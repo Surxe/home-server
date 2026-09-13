@@ -16,3 +16,4 @@ Curated, repo-maintained memory for the home-server box, installed from
 - [Read logs targeted](read-logs-targeted.md) — always read logs in slices (tail/grep), never the whole file (a full read can hang the VM 100 agent)
 - [Valheim VM agent](valheim-vm-agent.md) — check the VM 100 guest agent with a real exec (ping false-negatives); wait out world-load, don't retry-hammer, reboot last
 - [Cross-box todo](todo-cross-box.md) — this box is the hub + classifier for the shared `todo` store: bare repo, `classify-drain.sh`, the 13:00 timer, and the jq/claude/git-identity deps it needs
+- [Valheim PlayFab relay wedge](valheim-playfab-relay-wedge.md) — clients drop right after connecting (code 4098 / ZRpc timeout, NOT mods) = wedged crossplay relay; restart the server to fix
