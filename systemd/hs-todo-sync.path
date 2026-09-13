@@ -1,0 +1,14 @@
+[Unit]
+Description=Watch the local todo store for commits, then publish to the hub (home-server)
+Documentation=https://github.com/Surxe/todo
+
+[Path]
+# .git/logs/HEAD is appended on every commit, and every todo mutation auto-commits
+# — so this fires hs-todo-sync.service after each local change (classify meta, or a
+# `done`/`reopen`/`rm` marked on this box). Watching the reflog catches all commits
+# regardless of loose/packed refs. Mirrors the workstation's dev todo-sync.path.
+PathModified=/srv/dev/repos/todo/.git/logs/HEAD
+Unit=hs-todo-sync.service
+
+[Install]
+WantedBy=multi-user.target

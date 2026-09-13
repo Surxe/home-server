@@ -22,6 +22,7 @@ UNITS=(
   hs-valheim-status.service         hs-valheim-status.timer
   hs-valheim-status-edge.service    hs-valheim-status-edge.timer
   hs-todo-classify.service      hs-todo-classify.timer
+  hs-todo-sync.service          hs-todo-sync.path   # push-on-commit -> hub (see todo repo)
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) We activate only the mod-check timer
@@ -61,6 +62,15 @@ say "reload + enable timers"
 systemctl daemon-reload
 for t in "${TIMERS[@]}"; do
   systemctl enable --now "$t" && echo "  enabled --now $t"
+done
+# Path watcher(s): `enable --now` on a .path starts watching immediately. The store
+# clone must exist for the watched .git/logs/HEAD to be present; skip cleanly if not.
+for p in hs-todo-sync.path; do
+  if [ -e /srv/dev/repos/todo/.git/logs/HEAD ]; then
+    systemctl enable --now "$p" && echo "  enabled --now $p"
+  else
+    echo "  $p: skipped (todo store clone not present at /srv/dev/repos/todo yet)"
+  fi
 done
 # home-server-wifi.service is owned/enabled by bootstrap.sh; not touched here
 # (restarting it would drop the host's uplink). Backup timers reported, not changed:
