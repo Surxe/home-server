@@ -57,6 +57,9 @@ while IFS='|' read -r name version dll sha role url; do
 done < "$MANIFEST"
 
 [ -f "${HERE}/drop_that.drop_table.cfg" ] && cp "${HERE}/drop_that.drop_table.cfg" "${CFG}/drop_that.drop_table.cfg" && echo "config   drop_that.drop_table.cfg"
+[ -f "${HERE}/drummercraig.one_map_to_rule_them_all.cfg" ] && cp "${HERE}/drummercraig.one_map_to_rule_them_all.cfg" "${CFG}/drummercraig.one_map_to_rule_them_all.cfg" && echo "config   drummercraig.one_map_to_rule_them_all.cfg"
+mkdir -p "${CFG}/OneMapToRuleThemAll"
+[ -f "${HERE}/OneMapToRuleThemAll.catalog.txt" ] && cp "${HERE}/OneMapToRuleThemAll.catalog.txt" "${CFG}/OneMapToRuleThemAll/OneMapToRuleThemAll.catalog.txt" && echo "config   OneMapToRuleThemAll/OneMapToRuleThemAll.catalog.txt"
 
 # lloesche only ADDITIVELY syncs /config/bepinex/plugins into its runtime tree (no
 # delete), and does not always re-sync on a plain restart. So mirror /config into the
