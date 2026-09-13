@@ -14,9 +14,9 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   `install.sh` (unit installer).
 - `todo/` — this box is the hub + classifier for the shared cross-box `todo` store
   (bare repo `/srv/dev/repos/todo.git` + working clone). `classify-drain.sh` runs the
-  classify job; `hub-post-receive.sh` is the hub's post-receive hook that fans each
-  push out to the workstation (best-effort ssh pull, inert until a `todo-workstation`
-  reverse-ssh alias exists in dev's ~/.ssh). See the `todo-cross-box` memory note and
+  classify job (pull hub, classify, push meta). Push-back to the workstation is not
+  needed: the workstation pulls from the hub when it reads (`list`/`show`), since it
+  always reaches this box but not vice-versa. See the `todo-cross-box` memory note and
   the todo repo's README (Cross-box) for the full sync design.
 - `backups/` — restic (flash + B2) and vzdump scripts, retention, `backup.env.example`.
 - `valheim/` — `docker-compose.yml`, mod manifest + `stage-mods.sh`, DropThat loot cfg,

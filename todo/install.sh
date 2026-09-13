@@ -27,18 +27,3 @@ if [ ! -e "$TODO_BIN" ]; then
 fi
 as_dev install -D -m 0755 "$TODO_BIN" "$DEV_HOME/.local/bin/todo"
 say "installed $DEV_HOME/.local/bin/todo (copy of $TODO_BIN)"
-
-# --- hub post-receive hook -------------------------------------------------------
-# The bare hub lives on this box; a post-receive hook fans each push out to the
-# workstation (best-effort ssh pull) so server-side changes propagate to it without
-# polling. Copied (never symlinked) into the bare repo's hooks/, owned by dev (the
-# git-receive-pack user for both remote and local pushes). Inert until the reverse
-# `todo-workstation` ssh alias exists in dev's ~/.ssh (see hub-post-receive.sh).
-HUB_BARE="${TODO_HUB_BARE:-/srv/dev/repos/todo.git}"
-HOOK_SRC="$(cd "$(dirname "$0")" && pwd)/hub-post-receive.sh"
-if [ -d "$HUB_BARE" ] && [ -f "$HOOK_SRC" ]; then
-  as_dev install -D -m 0755 "$HOOK_SRC" "$HUB_BARE/hooks/post-receive"
-  say "installed hub post-receive hook -> $HUB_BARE/hooks/post-receive"
-else
-  say "hub bare repo not found at $HUB_BARE (or hook source missing) -- skipping post-receive hook"
-fi
