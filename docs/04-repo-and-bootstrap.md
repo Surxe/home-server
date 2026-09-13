@@ -67,7 +67,7 @@ documented in **`valheim/README.md`** — read it before touching the Valheim mo
 
 ## What the repo must NEVER contain
 
-- Restic password, B2 keys, SSH private keys, server passwords, PATs. Secrets stay
+- Restic password, B2 keys, SSH private keys, server passwords, PATs, `DEEPSEEK_API_KEY`. Secrets stay
   in Ethan's model (env/launcher), documented by *location* only. See Ethan's
   `no-email-in-repos` / secrets-policy conventions.
 - The world save itself (binary, churns; belongs in vzdump + B2, not git).
