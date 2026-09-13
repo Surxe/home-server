@@ -60,10 +60,10 @@ sudo valheim/verify-boot.sh --wait 55     # exit 0 = clean & session active
 ```
 
 ## 6. Client docs (if the mod is `required` or `optional`)
-Update `client-modpack/INSTALL.md` (the mod table + any version mentions) and
-`client-modpack/README.md` (the required/optional summary). There is no modpack zip or
-build script — the server enforces the set via ModSentry, so the client docs just record
-the required/optional mods and their exact pinned Thunderstore versions.
+Edit the **mod table** in `client-modpack/INSTALL.md` — one row per mod (version +
+Thunderstore package + ✅/➖/❌). That table is the single source of truth; the surrounding
+prose doesn't name individual mods, so nothing else needs syncing (`README.md` just points at
+the table). There is no modpack zip or build script — the server enforces the set via ModSentry.
 
 ## 7. Memory + announce + PR
 - Update the `valheim-server` memory (state line), then install it: see
