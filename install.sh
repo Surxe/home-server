@@ -32,6 +32,7 @@ fi
 # Installers to run, in order. Add more here as subsystems get their own installer.
 INSTALLERS=(
   "$REPO/systemd/install.sh"   # host systemd units (root)
+  "$REPO/todo/install.sh"      # shared `todo` CLI -> dev's ~/.local/bin (writes as dev)
   "$REPO/claude/install.sh"    # dev's agent context: box-local AGENTS.md, skills, memory -> ~/.agents + ~/.dsh (writes as dev)
   "$REPO/../dev-env/install.sh"  # shared dev config layer: portable skills/cc/ds/memories + dsh plugin (writes as dev)
 )
