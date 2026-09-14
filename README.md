@@ -6,8 +6,8 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
 
 ## Layout
 - `host/` — `/etc/network/interfaces`, wifi bring-up script, logind lid drop-in.
-- `systemd/` — `home-server-wifi.service` (wifi persistence), backup service/timer pairs,
-  `hs-mod-check.{service,timer}` (daily Valheim mod-update email),
+- `systemd/` — `home-server-wifi.service` (wifi persistence), the host backup pair
+  `hs-restic-flash.{service,timer}`,
   `hs-todo-classify.{service,timer}` (daily 13:00 CT todo classify + hub sync),
   `hs-todo-sync.{service,path}` (push this box's todo commits to the hub on each
   commit — event-driven, the home-server twin of the workstation's todo-sync.path), and
@@ -18,11 +18,14 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   needed: the workstation pulls from the hub when it reads (`list`/`show`), since it
   always reaches this box but not vice-versa. See the `todo-cross-box` memory note and
   the todo repo's README (Cross-box) for the full sync design.
-- `backups/` — restic (flash + B2) and vzdump scripts, retention, `backup.env.example`.
-- `valheim/` — `docker-compose.yml`, mod manifest + `stage-mods.sh`, DropThat loot cfg,
-  `check-mod-updates.sh` (Thunderstore poll) + `notify-mod-updates.sh` (email on change).
-- `guests/` — Valheim VM creation script + cloud-init.
-- `install.sh` — top-level installer; calls the per-area installers (currently `systemd/install.sh`).
+- `backups/` — host flash restic (`restic-flash.sh`) + retention + `backup.env.example`.
+  (The Valheim guest vzdump + offsite B2 world backup moved to the valheim-server repo.)
+- `guests/` — generic `create-vm.sh` (parameterized Proxmox VM creator) + `set-vm-dev-password.sh`.
+  The Valheim server itself — Docker/mod config, its VM wrapper, mod tooling, the systemd
+  feeds that watch it — lives in the sibling **valheim-server** repo
+  (`/srv/dev/repos/valheim-server`).
+- `install.sh` — top-level installer; calls the per-area installers (systemd, todo, agent
+  context, shared dev-env) and the sibling valheim-server installer when that clone is present.
 - `bootstrap.sh` — idempotent first-boot host apply: symlinks live paths into this repo, masks
   sleep, enables wifi, prints the manual follow-ups it cannot do.
 

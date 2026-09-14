@@ -35,8 +35,8 @@ line `LEVEL | metrics — issues`, exit 0/1/2 — what the Discord notifier cons
 `--no-guest`, `--no-color`, `-h`.
 
 **Discord alerts are folded into the Valheim status feed** (NOT a separate timer):
-`valheim/server-status-discord.sh` calls `hs-health.sh --line --no-guest` — see
-[[valheim-status-edge-notifier]]. The **daily heartbeat** post carries a host-health
+`server-status-discord.sh` (in the valheim-server repo) calls this box's
+`host/hs-health.sh --line --no-guest` — see [[valheim-status-edge-notifier]]. The **daily heartbeat** post carries a host-health
 snapshot as a second embed; the **3-min edge** check posts a host-health alert **only when
 health crosses the CRIT boundary** (enters CRIT, or recovers out of it) — WARN is
 heartbeat-only, because metrics sitting near a WARN threshold would flap every 3 min. Edge

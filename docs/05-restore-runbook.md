@@ -66,8 +66,9 @@ manager), the USB stick, and network access.
 7. **Restore the Valheim guest** from the latest **vzdump** on the stick (this is
    faster and more complete than rebuilding the VM from scratch + re-installing
    mods).
-   - If the vzdump is unavailable/stale: recreate the VM per `02-valheim-vm.md`,
-     re-stage the pinned mod DLLs from the manifest, then restore the **world**:
+   - If the vzdump is unavailable/stale: recreate the VM per the valheim-server repo's
+     `docs/02-valheim-vm.md`, re-stage the pinned mod DLLs from the manifest, then restore
+     the **world**:
 8. **Restore the world:** from the stick (vzdump already includes it), or
    `restic restore` from the **B2 `valheim-world`** repo (the bucket-scoped key
    can read it).

@@ -5,9 +5,10 @@
 #
 # Relationship to bootstrap.sh: bootstrap.sh is the full first-boot host apply
 # (network/interfaces, wifi service, fstab, sleep masking, guest checks). install.sh
-# is the modular component installer you call to (re)install a subsystem — today it
-# wires the systemd units (incl. the Valheim mod-update email alert). Both use the
-# same symlink-into-repo model, so running either keeps the live units == this repo.
+# is the modular component installer you call to (re)install a subsystem — it wires the
+# host systemd units + agent context, and delegates the whole Valheim subsystem to the
+# sibling valheim-server repo. Both use the same symlink-into-repo model, so running
+# either keeps the live units == the repos.
 #
 # Secrets are never installed by these scripts — only their locations under
 # /etc/home-server/ (see each *.env.example).
@@ -29,6 +30,16 @@ if [ -d "$REPO/../dev-env/.git" ]; then
   fi
 fi
 
+# Refresh the sibling valheim-server clone too (the Valheim subsystem lives there now).
+# Same warn-and-continue as dev-env: a missing/behind clone must not abort the host install.
+if [ -d "$REPO/../valheim-server/.git" ]; then
+  if runuser -u dev -- git -C "$REPO/../valheim-server" pull --ff-only; then
+    echo ">> valheim-server clone updated"
+  else
+    echo "!! valheim-server clone update failed — continuing with existing checkout" >&2
+  fi
+fi
+
 # Installers to run, in order. Add more here as subsystems get their own installer.
 INSTALLERS=(
   "$REPO/systemd/install.sh"   # host systemd units (root)
@@ -36,6 +47,13 @@ INSTALLERS=(
   "$REPO/claude/install.sh"    # dev's agent context: box-local AGENTS.md, skills, memory -> ~/.agents + ~/.dsh (writes as dev)
   "$REPO/../dev-env/install.sh"  # shared dev config layer: portable skills/cc/ds/memories + dsh plugin (writes as dev)
 )
+# Valheim subsystem lives in the sibling valheim-server repo — include it only if that
+# clone is present (its systemd units + agent context; root, drops to dev where needed).
+if [ -f "$REPO/../valheim-server/install.sh" ]; then
+  INSTALLERS+=("$REPO/../valheim-server/install.sh")
+else
+  echo "!! valheim-server clone not found at $REPO/../valheim-server — skipping its install" >&2
+fi
 
 for inst in "${INSTALLERS[@]}"; do
   if [ -x "$inst" ]; then
