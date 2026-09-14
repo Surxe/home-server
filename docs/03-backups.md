@@ -38,7 +38,8 @@ Mode **snapshot** (needs the QEMU guest agent) = a consistent image without stop
 server; `zstd` compressed. Retention is **count-based (keep-last=6), not 14 days** —
 images are large (~16 GB each) and don't dedup, so a 14-day twice-daily rotation would
 blow past the stick. This is the one place the 14-day rule doesn't apply. Driven by
-`systemd/hs-vzdump-valheim.{service,timer}` → `backups/vzdump-valheim.sh`.
+`hs-vzdump-valheim.{service,timer}` → `backups/vzdump-valheim.sh` — **now in the
+valheim-server repo** (the unit runs on this host but the files live there).
 
 ### 3. restic → flash — file-level host config history (twice daily)
 Repo on the stick at `/mnt/backup/restic-repo`; password from `/etc/home-server/backup.env`
@@ -61,8 +62,8 @@ The only offsite copy, and the only copy of the *irreplaceable* thing that isn't
 box. Separate restic repo on a **dedicated, bucket-scoped B2 key** (read+write+delete for
 prune) so the box can touch only `valheim-world`, never Ethan's personal `b2-backup`.
 **Runs inside VM 100** (the world dir is local to the guest) via
-`valheim/backup/valheim-b2-world.{service,timer}` → `backups/restic-b2-world.sh`. Same
-`--keep-within 14d` + prune + check.
+`valheim/backup/valheim-b2-world.{service,timer}` → `backups/restic-b2-world.sh` — **now in
+the valheim-server repo**. Same `--keep-within 14d` + prune + check.
 
 > **On prune and "deltas":** restic snapshots are **not** a full-plus-incrementals chain —
 > each snapshot is a complete, independently-restorable set of references to content-addressed

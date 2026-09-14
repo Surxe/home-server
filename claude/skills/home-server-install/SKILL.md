@@ -26,13 +26,13 @@ Any edit under the home-server repo to code with a deploy step, i.e. anything
   (skills symlinked into `~/.claude/skills`; memory symlinked into `~/.claude/projects/-<proj>/memory`
   and rendered to `~/.dsh/memory` for the DeepSeek Harness), so a repo edit does NOT reach
   the live area until you re-install.
-- Scripts a unit runs in place (e.g. `valheim/notify-mod-updates.sh`,
-  `valheim/check-mod-updates.sh`, `host/hs-wifi-up.sh`) — live immediately from the repo
-  path, but still must be **tested**.
+- Scripts a unit runs in place (e.g. `host/hs-wifi-up.sh`, `host/hs-health.sh`,
+  `todo/classify-drain.sh`) — live immediately from the repo path, but still must be
+  **tested**.
 
-If the edit is to VM-side Valheim assets instead (`docker-compose.yml`, `mods.manifest`,
-`hooks/sync-plugins.sh`) those deploy to the guest via `stage-mods.sh` / the container, not
-`install.sh` — the same apply-and-verify discipline holds; just use that deploy path.
+The Valheim server lives in its own repo now (`valheim-server`, a sibling clone). For edits
+there — mods, VM config, its systemd units or agent context — use that repo's
+**`valheim-server-install`** skill, not this one.
 
 ## The loop — do all four
 

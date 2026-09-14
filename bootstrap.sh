@@ -41,10 +41,11 @@ link "$REPO/host/interfaces"              /etc/network/interfaces
 link "$REPO/host/logind-home-server.conf" /etc/systemd/logind.conf.d/home-server.conf
 link "$REPO/host/hs-wifi-up.sh"           /usr/local/sbin/hs-wifi-up.sh
 link "$REPO/systemd/home-server-wifi.service" /etc/systemd/system/home-server-wifi.service
-# Host-side backups only: flash restic (host config + repo) + vzdump (whole guest).
-# The offsite B2 WORLD backup runs INSIDE the Valheim VM (that's where the world is) —
-# see valheim/backup/ + valheim/restic-b2-world.sh, installed during VM provisioning.
-for u in hs-restic-flash hs-vzdump-valheim; do
+# Host-side backup: flash restic (host config + repo + world). The whole-guest vzdump and
+# the offsite B2 WORLD backup belong to the Valheim subsystem (valheim-server repo): the
+# vzdump is a host unit installed by valheim-server/systemd/install.sh, and the B2 world
+# backup runs INSIDE the VM (valheim-server/valheim/backup/ + backups/restic-b2-world.sh).
+for u in hs-restic-flash; do
   link "$REPO/systemd/$u.service" "/etc/systemd/system/$u.service"
   link "$REPO/systemd/$u.timer"   "/etc/systemd/system/$u.timer"
 done
@@ -68,8 +69,8 @@ else echo "  ok: /mnt/backup already in fstab"; fi
 
 say "4. Guests"
 if command -v qm >/dev/null && ! qm status 100 >/dev/null 2>&1; then
-  echo "  Valheim VM (100) absent. Recreate with: $REPO/guests/create-valheim-vm.sh"
-  echo "  (needs the Debian cloud image; see the script header.)"
+  echo "  Valheim VM (100) absent. Recreate with: /srv/dev/repos/valheim-server/guests/create-valheim-vm.sh"
+  echo "  (a thin wrapper over this repo's guests/create-vm.sh; needs the Debian cloud image.)"
 else echo "  ok: VM 100 present (or qm unavailable)"; fi
 
 say "5. Manual follow-ups bootstrap can NOT do"
@@ -77,9 +78,12 @@ cat <<'EOF'
   - REBOOT to confirm wifi + default route persist (home-server-wifi.service).
   - Stage secrets (never committed):
       * /etc/home-server/backup.env   (restic pw file + B2 bucket-scoped key)   [see backups/backup.env.example]
-      * /etc/valheim/valheim.env      (server/world name + password)            [see valheim/valheim.env.example]
-    Then enable timers: systemctl enable --now hs-restic-flash.timer hs-vzdump-valheim.timer hs-restic-b2-world.timer
-  - Provide the real valheim-mods/SERVER-HANDOFF.md manifest; reconcile valheim/mods.manifest (incl. ModSentry + FarmGrid) and re-run valheim/stage-mods.sh.
+      * /etc/valheim/valheim.env      (server/world name + password)            [see valheim-server repo: valheim/valheim.env.example]
+    Then enable the host backup timer: systemctl enable --now hs-restic-flash.timer
+    (The Valheim guest-dump + world-backup timers belong to the valheim-server subsystem — see that repo.)
+  - Deploy the Valheim server: run /srv/dev/repos/valheim-server/install.sh, then apply its
+    mod set with valheim-server/guests/vm-apply-valheim.sh. (home-server's install.sh runs
+    valheim-server's installer automatically whenever that clone is present.)
   - Harden SSH to key-only (docs/01 section 6) once remote access is wanted.
 EOF
 echo

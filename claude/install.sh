@@ -22,6 +22,11 @@ AGENTS_DIR="$DEV_HOME/.agents"
 DSH_HOME_DIR="$DEV_HOME/.dsh"
 DEV_ENV_REPO="$HERE/../../dev-env"
 
+# This repo owns one fragment of the SHARED per-project MEMORY.md index (the host section).
+# The valheim-server repo owns 20-valheim-server.md; the live MEMORY.md is their
+# concatenation in name order, so both installers rebuild it identically (any order).
+FRAGMENT_NAME="10-home-server.md"
+
 # Run a command AS dev: directly if we already are dev, else via runuser (root only).
 as_dev() {
   if [ "$(id -un)" = dev ]; then "$@"; else runuser -u dev -- "$@"; fi
@@ -78,11 +83,36 @@ if [ -d "$HERE/memory" ]; then
     [ -d "$d" ] || continue
     name="$(basename "$d")"
     dst="$AGENTS_DIR/memory"
-    as_dev mkdir -p "$dst"
-    as_dev cp -a "$d." "$dst/"
-    say "memory ($name) -> $dst"
+    as_dev mkdir -p "$dst" "$dst/.index.d"
+
+    # Note files -> the shared store (everything EXCEPT the index fragment), additive.
+    as_dev bash -c '
+      set -euo pipefail
+      d="$1"; dst="$2"
+      for f in "$d"*.md; do
+        [ -e "$f" ] || continue
+        b="$(basename "$f")"
+        case "$b" in MEMORY.md|MEMORY.*) continue;; esac
+        install -D -m 0644 "$f" "$dst/$b"
+      done
+    ' _ "$d" "$dst"
+
+    # This repo's curated index -> its fragment, then reassemble the shared MEMORY.md
+    # from all installed fragments (order-stable by name).
+    if [ -f "${d}MEMORY.md" ]; then
+      as_dev install -D -m 0644 "${d}MEMORY.md" "$dst/.index.d/$FRAGMENT_NAME"
+    fi
+    as_dev bash -c '
+      set -euo pipefail
+      dst="$1"
+      if compgen -G "$dst/.index.d/*.md" >/dev/null; then
+        cat "$dst"/.index.d/*.md > "$dst/MEMORY.md"
+      fi
+    ' _ "$dst"
+    say "memory ($name) -> $dst  (fragment $FRAGMENT_NAME)"
     ensure_agents_symlink "$dst" "$CLAUDE_DIR/projects/-$name/memory"
-    # DeepSeek Harness: same notes, memory-standard (mm) layout.
+    # DeepSeek Harness: same notes, memory-standard (mm) layout. Default id ("local"); the
+    # valheim-server repo renders its notes under a distinct --memory-id so they merge.
     if [ -f "$DEV_ENV_REPO/lib/memory-standard.py" ]; then
       as_dev python3 "$DEV_ENV_REPO/lib/memory-standard.py" render --src "$d" --dst "$DSH_HOME_DIR/memory" || \
         say "!! dsh memory render failed (see above)"

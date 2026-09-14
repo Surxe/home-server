@@ -45,7 +45,8 @@ below serves two goals: **cheap backup** and **cheap restore**.
 
 1. `01-proxmox-host.md` — install Proxmox, network, headless, break-glass admin.
    (SSH is deferred; Ethan works at the local console for now — see `06-ethan-tasks.md`.)
-2. `02-valheim-vm.md` — VM + Docker + modded Valheim, friends joining by crossplay code.
+2. The valheim-server repo's `docs/02-valheim-vm.md` — VM + Docker + modded Valheim,
+   friends joining by crossplay code. (The Valheim subsystem now lives in that repo.)
 3. Get it running, confirm a friend can join.
 4. Then: copy this dir + repo onto the box, install Claude Code, proceed with
    `03-backups.md`, `04-repo-and-bootstrap.md`, `05-restore-runbook.md`.
@@ -60,7 +61,7 @@ box itself).
 ## Related existing docs
 
 - `../valheim-mods/SERVER-HANDOFF.md` — the authoritative mod version/hash
-  manifest and ModSentry policy-folder layout. `02-valheim-vm.md` references it
-  rather than duplicating it.
+  manifest and ModSentry policy-folder layout. The valheim-server repo's
+  `docs/02-valheim-vm.md` references it rather than duplicating it.
 - `/srv/dev/repos/my-system` — the workstation's context repo. This server gets
   its **own** repo; do not fold it into my-system.
