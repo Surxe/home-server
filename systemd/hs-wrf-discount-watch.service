@@ -13,10 +13,9 @@ Type=oneshot
 # resolve under systemd, matching the other hs-* dev units.
 User=dev
 Environment=HOME=/home/dev
-# Dispatch is OFF by default so a fresh deploy only dry-runs (logs the gh command
-# it *would* run). Flip to 1 — `systemctl edit hs-wrf-discount-watch.service` ->
-# [Service] Environment=WRF_DISPATCH=1 — once verified. See the handoff doc.
-Environment=WRF_DISPATCH=0
+# Dispatch is ON: the Jev mapping system is calibrated (accept threshold 0.7),
+# thresholds are set, and the prompt handles Relic disambiguation. Ready to run unattended.
+Environment=WRF_DISPATCH=1
 
 # Two steps, run in order:
 #   1. scrape + persist the 3 latest news posts into archive/

@@ -8,7 +8,15 @@ Documentation=https://github.com/Surxe/WRFrontiers-News-Scraper
 # post — so poll a few times a day rather than betting on one Tuesday slot. Each
 # run is cheap (~13 requests) and deduped by canonical week id, so extra polls and
 # catch-ups cost almost nothing and never reprocess a week.
-OnCalendar=*-*-* 04,10,16,22:00:00 America/Chicago
+#
+# Schedule varies by day: more frequent on Mon/Fri (announcement days), less on
+# weekends. All times in America/Chicago.
+#   Mon,Fri: 6x/day at 01:00 (Swedish hours), 04:00, 08:00, 12:00, 16:00, 20:00
+#   Tue-Thu: 4x/day at 02:00, 08:00, 14:00, 20:00
+#   Sat,Sun: 2x/day at 06:00, 18:00
+OnCalendar=Mon,Fri *-*-* 01,04,08,12,16,20:00:00 America/Chicago
+OnCalendar=Tue-Thu *-*-* 02,08,14,20:00:00 America/Chicago
+OnCalendar=Sat,Sun *-*-* 06,18:00:00 America/Chicago
 # Catch up after downtime (server may have been off/asleep at a slot).
 Persistent=true
 
