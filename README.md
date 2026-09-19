@@ -10,7 +10,10 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   `hs-restic-flash.{service,timer}`,
   `hs-todo-classify.{service,timer}` (daily 13:00 CT todo classify + hub sync),
   `hs-todo-sync.{service,path}` (push this box's todo commits to the hub on each
-  commit — event-driven, the home-server twin of the workstation's todo-sync.path), and
+  commit — event-driven, the home-server twin of the workstation's todo-sync.path),
+  `hs-wrf-discount-watch.{service,timer}` (poll the WRF news feed 4x/day: scrape the
+  latest posts, and on a new weekly discount dispatch the discount-visualizer — see
+  the WRFrontiers-News-Scraper repo; enabled only when that clone is present), and
   `install.sh` (unit installer).
 - `todo/` — this box is the hub + classifier for the shared cross-box `todo` store
   (bare repo `/srv/dev/repos/todo.git` + working clone). `classify-drain.sh` runs the

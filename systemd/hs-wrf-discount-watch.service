@@ -1,0 +1,26 @@
+[Unit]
+Description=WRF discount pipeline: scrape latest news, detect + dispatch new discount week
+Documentation=https://github.com/Surxe/WRFrontiers-News-Scraper
+After=network-online.target
+Wants=network-online.target
+# The pipeline and its state/archive live in the WRFrontiers-News-Scraper clone.
+ConditionPathExists=/srv/dev/repos/WRFrontiers-News-Scraper/scripts/watch_discount.py
+
+[Service]
+Type=oneshot
+# Runs as dev, who owns the clone (its data/ state + archive/) and holds the gh
+# auth used to dispatch the visualizer workflow. HOME is set so ~ and gh config
+# resolve under systemd, matching the other hs-* dev units.
+User=dev
+Environment=HOME=/home/dev
+# Dispatch is OFF by default so a fresh deploy only dry-runs (logs the gh command
+# it *would* run). Flip to 1 — `systemctl edit hs-wrf-discount-watch.service` ->
+# [Service] Environment=WRF_DISPATCH=1 — once verified. See the handoff doc.
+Environment=WRF_DISPATCH=0
+
+# Two steps, run in order:
+#   1. scrape + persist the 3 latest news posts into archive/
+#   2. detect a new discount week from those and (if enabled) dispatch the visualizer
+ExecStart=/usr/bin/python3 /srv/dev/repos/WRFrontiers-News-Scraper/scripts/archive.py --latest 3
+ExecStart=/usr/bin/python3 /srv/dev/repos/WRFrontiers-News-Scraper/scripts/watch_discount.py --latest 3
+TimeoutStartSec=300

@@ -21,6 +21,7 @@ UNITS=(
   hs-restic-flash.service   hs-restic-flash.timer
   hs-todo-classify.service      hs-todo-classify.timer
   hs-todo-sync.service          hs-todo-sync.path   # push-on-commit -> hub (see todo repo)
+  hs-wrf-discount-watch.service hs-wrf-discount-watch.timer  # WRF discount announce watch (see wrf-news-research repo)
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) The backup timer's enable-state is left
@@ -52,6 +53,14 @@ for p in hs-todo-sync.path; do
     echo "  $p: skipped (todo store clone not present at /srv/dev/repos/todo yet)"
   fi
 done
+# WRF discount watch: enable the poll timer only if the wrf-news-research clone is
+# present (the .service also guards itself via ConditionPathExists). `enable --now`
+# on a timer only arms the schedule; it does not run the check immediately.
+if [ -f /srv/dev/repos/WRFrontiers-News-Scraper/scripts/watch_discount.py ]; then
+  systemctl enable --now hs-wrf-discount-watch.timer && echo "  enabled --now hs-wrf-discount-watch.timer"
+else
+  echo "  hs-wrf-discount-watch.timer: skipped (WRFrontiers-News-Scraper clone not present at /srv/dev/repos/WRFrontiers-News-Scraper yet)"
+fi
 # home-server-wifi.service is owned/enabled by bootstrap.sh; not touched here
 # (restarting it would drop the host's uplink). Backup timer reported, not changed:
 for t in hs-restic-flash.timer; do
