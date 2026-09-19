@@ -1,0 +1,18 @@
+[Unit]
+Description=Steam price tracker: daily price refresh + alert check (home-server)
+Documentation=https://github.com/Surxe/steam-price-tracker
+
+[Timer]
+# Once a day. Steam's daily discount rotation lands around 10:00 America/Los_Angeles
+# (~12:00 America/Chicago), so run a bit after it so a fresh sale is visible. One run
+# is plenty: prices are fetched live each run and alert email is deduped to at most
+# once per app per day.
+#
+# This REPLACES the workstation's resume-from-sleep trigger — the home-server is
+# always-on, so a plain daily timer is the right model.
+OnCalendar=*-*-* 13:00:00 America/Chicago
+# Catch up after downtime (box may have been off at the scheduled slot).
+Persistent=true
+
+[Install]
+WantedBy=timers.target
