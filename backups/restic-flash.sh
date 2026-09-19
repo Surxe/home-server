@@ -24,8 +24,12 @@ restic snapshots >/dev/null 2>&1 || restic init
 # also grab the non-symlinked bits and the world save directly.
 # /etc/home-server holds the secrets that never live in the repo (incl. the restic
 # password itself — encrypted here, but keep an off-box copy too for bootstrap).
+# todo-store.git is the bare hub for the cross-box todo store — the source-of-truth
+# for the captured/classified todo data (its tooling lives on GitHub, so only the
+# store data here is irreplaceable).
 PATHS=(
   /srv/dev/repos/home-server
+  /srv/dev/repos/todo-store.git
   /etc/home-server
   /etc/fstab
   /etc/network/interfaces.orig-preclaude
