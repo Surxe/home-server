@@ -1,0 +1,16 @@
+[Unit]
+Description=Poll the WRF news feed for a new discount week (4x/day, home-server)
+Documentation=https://github.com/Surxe/WRFrontiers-News-Scraper
+
+[Timer]
+# The weekly discount refreshes Tuesdays ~10:00 CEST / 01:00 PT (~03:00
+# America/Chicago), but WRF sometimes announces off-schedule or spins up a fresh
+# post — so poll a few times a day rather than betting on one Tuesday slot. Each
+# run is cheap (~13 requests) and deduped by canonical week id, so extra polls and
+# catch-ups cost almost nothing and never reprocess a week.
+OnCalendar=*-*-* 04,10,16,22:00:00 America/Chicago
+# Catch up after downtime (server may have been off/asleep at a slot).
+Persistent=true
+
+[Install]
+WantedBy=timers.target
