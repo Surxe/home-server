@@ -22,8 +22,11 @@ restic snapshots >/dev/null 2>&1 || restic init
 
 # Paths to protect. The repo checkout captures all symlinked host config;
 # also grab the non-symlinked bits and the world save directly.
+# /etc/home-server holds the secrets that never live in the repo (incl. the restic
+# password itself — encrypted here, but keep an off-box copy too for bootstrap).
 PATHS=(
   /srv/dev/repos/home-server
+  /etc/home-server
   /etc/fstab
   /etc/network/interfaces.orig-preclaude
   /etc/pve
