@@ -11,7 +11,7 @@ they are easy to confuse — this is the map. Two are real backups to the **USB 
 | --- | --- | --- | --- | --- | --- | --- |
 | **LVM-thin snapshot** | Whole VM-100 disk, point-in-time (copy-on-write) | **Host** thin pool `pve/data` — *same disk, same box* | **Manual**, before each mod/game change | Only diverged blocks (≈0 at creation, grows over time) | **Seconds** (`qm rollback`) | Trivial one command — **but discards newer state**, and dies with the disk |
 | **vzdump** | **Entire** Valheim VM (OS + Docker + game install + world), consistent | USB stick `/mnt/backup/vzdump/*.vma.zst` | **Daily 04:00**, keep-last=6 (~6 days) | ~6–16 GB per image (zstd); ~40–90 GB for 6 | ~10–20 min (`qmrestore` a 16 GB image) | Moderate — restores the whole VM in one action. Most-restorable |
-| **restic → flash** | Host config (`/etc/pve`, fstab, network) + repo checkout. **Not the world** (see note) | USB stick `/mnt/backup/restic-repo` (encrypted, dedup) | Twice daily 03:00 & 15:00, keep-within 14d + prune | Tiny — ~13 MB source; ~28 dedup'd snapshots ≈ **15–30 MB** | Seconds–minutes (single file); minutes (full) | Low — pick any snapshot/path. Needs restic password |
+| **restic → flash** | Host config (`/etc/pve`, fstab, network) + repo checkout + todo store hub (`todo-store.git`). **Not the world** (see note) | USB stick `/mnt/backup/restic-repo` (encrypted, dedup) | Twice daily 03:00 & 15:00, keep-within 14d + prune | Tiny — ~13 MB source; ~28 dedup'd snapshots ≈ **15–30 MB** | Seconds–minutes (single file); minutes (full) | Low — pick any snapshot/path. Needs restic password |
 | **restic → B2** | Valheim **world only** (`/srv/valheim/config`, 1.1 GB) | Backblaze B2 bucket (scoped key); **runs inside the VM** | Every other day 12:30 UTC, keep-within 14d + prune | Cloud, dedup; ~7 snapshots sharing chunks ≈ **1.5–2 GB total** | Minutes (download ~1 GB over the home link) | Low effort; small **B2 egress $** (~$0.01/GB). Needs key + restic password |
 
 > **Status (2026-09-13):** vzdump→flash ✅ running. restic→B2 ✅ running (5 snapshots,
@@ -43,8 +43,11 @@ valheim-server repo** (the unit runs on this host but the files live there).
 
 ### 3. restic → flash — file-level host config history (twice daily)
 Repo on the stick at `/mnt/backup/restic-repo`; password from `/etc/home-server/backup.env`
-(never committed). Scope: Proxmox host config (`/etc/pve`, `/etc/fstab`, `/etc/network`)
-and the `home-server` repo checkout — ~13 MB total, most of it the repo's `.git`.
+(never committed). Scope: Proxmox host config (`/etc/pve`, `/etc/fstab`, `/etc/network`),
+the `home-server` repo checkout, and the cross-box **todo store** bare hub
+(`/srv/dev/repos/todo-store.git` — the source-of-truth for captured/classified todo data;
+its tooling lives on GitHub, so only the store data here is irreplaceable) — ~13 MB total,
+most of it the repo's `.git`.
 `--keep-within 14d` + `restic prune`; `restic check` after each run (occasionally
 `--read-data` to catch flash bit-rot). Driven by
 `systemd/hs-restic-flash.{service,timer}` → `backups/restic-flash.sh`. **Guarded:** refuses
