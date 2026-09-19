@@ -1,0 +1,28 @@
+[Unit]
+Description=Steam price tracker: fetch tracked-app prices, email alerts at/below threshold
+Documentation=https://github.com/Surxe/steam-price-tracker
+After=network-online.target
+Wants=network-online.target
+# The tracker is a generic sibling clone; its venv is built by steam-tracker/install.sh.
+ConditionPathExists=/srv/dev/repos/steam-price-tracker/.venv/bin/python
+
+[Service]
+Type=oneshot
+# Runs as dev, who owns the clone (its data/ metadata + alert-dedup state). HOME is
+# set so ~ resolves under systemd, matching the other hs-* dev units.
+User=dev
+Environment=HOME=/home/dev
+# data/apps.json + data/alert_state.json are written relative to the clone root.
+WorkingDirectory=/srv/dev/repos/steam-price-tracker
+# The tracked-app list is config-as-code owned by THIS repo (not the generic
+# tracker clone, whose data/ is gitignored). Point the tracker at the repo copy;
+# edit it via the add-steam-app skill, then commit here (no reinstall needed —
+# the unit reads it in place).
+Environment=STEAM_TRACKER_APPS_PATH=/srv/dev/repos/home-server/steam-tracker/tracked_apps.json
+# SMTP credentials + recipient (chmod 600, root-owned; created by hand from
+# steam-tracker.env.example — never committed). Leading '-' => a missing file is
+# NOT an error: the price fetch still runs, email just stays off (console alerts
+# into the journal). Set SMTP_USER + SMTP_PASSWORD + EMAIL_TO to enable email.
+EnvironmentFile=-/etc/home-server/steam-tracker.env
+ExecStart=/srv/dev/repos/steam-price-tracker/.venv/bin/python -m steam_price_tracker
+TimeoutStartSec=300
