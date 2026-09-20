@@ -17,6 +17,10 @@
 #   * dev in the render+video groups, and loginctl linger so /run/user/<uid> is
 #     always present for the headless gamescope session (a fresh `sudo -u dev`
 #     initgroups is what actually grants the groups to the mapper run).
+#   * i386 multiarch + umu-launcher — the mapper launches Shipping.exe via `umu-run`
+#     (Open-Wine-Components/umu-launcher), which isn't in Debian; install its
+#     debian-13 .deb from the GitHub release. It pulls 32-bit mesa, so i386 multiarch
+#     must be enabled first (Proton/Wine need it anyway).
 #
 # It does NOT touch /srv/dev/wrf, Proton, or the game download — those live on the
 # dedicated WRF volume (provisioned separately) and in WRF-Compat-Tools.
@@ -31,6 +35,10 @@ DEV_USER=dev
 BACKPORTS_SRC=/etc/apt/sources.list.d/debian-backports.sources
 RUNTIME_PKGS=(mesa-vulkan-drivers vulkan-tools)   # RADV + vulkaninfo, from trixie main
 BACKPORTS_PKGS=(gamescope)                          # from trixie-backports
+UMU_VERSION=1.4.4                                   # Open-Wine-Components/umu-launcher release
+UMU_BASE="https://github.com/Open-Wine-Components/umu-launcher/releases/download/${UMU_VERSION}"
+UMU_DEBS=("python3-umu-launcher_${UMU_VERSION}-1_amd64_debian-13.deb" \
+          "umu-launcher_${UMU_VERSION}-1_all_debian-13.deb")
 
 need_update=0
 
@@ -45,9 +53,20 @@ else
   echo "  $BACKPORTS_SRC already current"
 fi
 
+# 1b. Enable i386 multiarch (umu-launcher/Proton need 32-bit mesa). If newly added,
+#     the apt cache must be refreshed to see i386 packages.
+say "wrf-gpu: ensuring i386 multiarch"
+if dpkg --print-foreign-architectures | grep -qx i386; then
+  echo "  i386 already enabled"
+else
+  dpkg --add-architecture i386
+  echo "  added i386 foreign architecture"
+  need_update=1
+fi
+
 # 2. Install the runtime Vulkan stack (idempotent — apt no-ops if satisfied). Refresh
-#    the cache first if we just added the backports source, or if gamescope (our
-#    backports canary) isn't present yet.
+#    the cache first if we just added the backports source / i386, or if gamescope
+#    (our backports canary) isn't present yet.
 if ! dpkg -s gamescope >/dev/null 2>&1; then need_update=1; fi
 if [ "$need_update" = 1 ]; then
   say "wrf-gpu: apt-get update"
@@ -59,6 +78,22 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y "${RUNTIME_PKGS[@]}"
 
 say "wrf-gpu: installing gamescope (trixie-backports)"
 DEBIAN_FRONTEND=noninteractive apt-get install -y -t trixie-backports "${BACKPORTS_PKGS[@]}"
+
+# 2b. umu-launcher (the mapper's `umu-run`). Not in Debian; install the debian-13
+#     .deb pair from the pinned GitHub release. apt resolves its 32-bit mesa deps
+#     (hence i386 above). Idempotent: skip if umu-run already at $UMU_VERSION.
+say "wrf-gpu: installing umu-launcher $UMU_VERSION"
+if command -v umu-run >/dev/null 2>&1 && umu-run --version 2>/dev/null | grep -q "$UMU_VERSION"; then
+  echo "  umu-launcher $UMU_VERSION already installed"
+else
+  tmp="$(mktemp -d)"
+  for d in "${UMU_DEBS[@]}"; do
+    echo "  fetching $d"
+    curl -fsSL -o "$tmp/$d" "$UMU_BASE/$d"
+  done
+  DEBIAN_FRONTEND=noninteractive apt-get install -y "$tmp/${UMU_DEBS[0]}" "$tmp/${UMU_DEBS[1]}"
+  rm -rf "$tmp"
+fi
 
 # 3. GPU group membership + persistent runtime dir for dev. usermod re-add and
 #    enable-linger are both idempotent.
@@ -85,5 +120,10 @@ if ls /usr/share/vulkan/icd.d/radeon_icd*.json >/dev/null 2>&1; then
   echo "  RADV ICD: $(ls /usr/share/vulkan/icd.d/radeon_icd*.json)"
 else
   echo "  !! RADV ICD (radeon_icd) not found under /usr/share/vulkan/icd.d/"; ok=0
+fi
+if command -v umu-run >/dev/null 2>&1; then
+  echo "  umu-run: $(umu-run --version 2>&1 | head -1)"
+else
+  echo "  !! umu-run missing"; ok=0
 fi
 [ "$ok" = 1 ] && echo "wrf-gpu: install done." || { echo "wrf-gpu: install INCOMPLETE — see warnings above" >&2; exit 1; }
