@@ -1,0 +1,29 @@
+[Unit]
+Description=WRF update probe: anonymous Steam PICS check for a new WR:Frontiers patch
+Documentation=https://github.com/Surxe/WRFrontiersDB-Orchestrator
+After=network-online.target
+Wants=network-online.target
+# The probe + its state file live in the Orchestrator clone; its venv (which
+# carries steam[client]) is built by ../wrf-probe/install.sh.
+ConditionPathExists=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python
+
+[Service]
+Type=oneshot
+# Runs as dev, who owns the clone (and thus its data/update_probe_state.json).
+# HOME is set so ~ resolves under systemd, matching the other hs-* dev units.
+User=dev
+Environment=HOME=/home/dev
+# Run from the clone so `src/probe.py` and the default state path
+# (data/update_probe_state.json) resolve inside it.
+WorkingDirectory=/srv/dev/repos/WRFrontiersDB-Orchestrator
+# The probe is anonymous — no secrets, no EnvironmentFile. It queries Steam PICS,
+# compares the public depot manifest GID against its own state file, and reports
+# via exit code: 0 = no change, 10 = new patch, 1 = probe error (treated as no
+# change; state left untouched). It does NOT trigger the pipeline yet — wiring the
+# orchestrator trigger is a separate later PR.
+#
+# SuccessExitStatus=10 so a detected patch (exit 10) is a *successful* run, not a
+# unit failure. Only exit 1 (a real probe error) marks the unit failed.
+SuccessExitStatus=10
+ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/probe.py
+TimeoutStartSec=120

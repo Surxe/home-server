@@ -13,10 +13,13 @@ Type=oneshot
 # resolve under systemd, matching the other hs-* dev units.
 User=dev
 Environment=HOME=/home/dev
-# Dispatch is OFF by default so a fresh deploy only dry-runs (logs the gh command
-# it *would* run). Flip to 1 — `systemctl edit hs-wrf-discount-watch.service` ->
-# [Service] Environment=WRF_DISPATCH=1 — once verified. See the handoff doc.
-Environment=WRF_DISPATCH=0
+# Run from the clone so the scripts' relative defaults (archive/, data/) resolve
+# inside it. Without this, archive.py --out's default `archive` is created against
+# systemd's CWD (/), which dev can't write -> PermissionError before step 2 runs.
+WorkingDirectory=/srv/dev/repos/WRFrontiers-News-Scraper
+# Dispatch is ON: the Jev mapping system is calibrated (accept threshold 0.7),
+# thresholds are set, and the prompt handles Relic disambiguation. Ready to run unattended.
+Environment=WRF_DISPATCH=1
 
 # Two steps, run in order:
 #   1. scrape + persist the 3 latest news posts into archive/

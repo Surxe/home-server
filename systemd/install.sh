@@ -22,6 +22,8 @@ UNITS=(
   hs-todo-classify.service      hs-todo-classify.timer
   hs-todo-sync.service          hs-todo-sync.path   # push-on-commit -> hub (see todo repo)
   hs-wrf-discount-watch.service hs-wrf-discount-watch.timer  # WRF discount announce watch (see wrf-news-research repo)
+  hs-steam-price-refresh.service hs-steam-price-refresh.timer  # daily Steam price refresh (see steam-price-tracker repo)
+  hs-wrf-update-probe.service   hs-wrf-update-probe.timer  # WRF patch probe (enabled by wrf-probe/install.sh; see WRFrontiersDB-Orchestrator repo)
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) The backup timer's enable-state is left
@@ -61,6 +63,11 @@ if [ -f /srv/dev/repos/WRFrontiers-News-Scraper/scripts/watch_discount.py ]; the
 else
   echo "  hs-wrf-discount-watch.timer: skipped (WRFrontiers-News-Scraper clone not present at /srv/dev/repos/WRFrontiers-News-Scraper yet)"
 fi
+# hs-steam-price-refresh.timer is linked above but ENABLED by steam-tracker/install.sh,
+# right after it builds the tracker clone's venv (the timer's real prerequisite) — that
+# avoids a first-run ordering gap, since this installer runs before the venv exists.
+# hs-wrf-update-probe.timer follows the same split: linked here, ENABLED by
+# wrf-probe/install.sh once it has built the Orchestrator clone's venv.
 # home-server-wifi.service is owned/enabled by bootstrap.sh; not touched here
 # (restarting it would drop the host's uplink). Backup timer reported, not changed:
 for t in hs-restic-flash.timer; do

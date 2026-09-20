@@ -46,6 +46,8 @@ INSTALLERS=(
   "$REPO/todo/install.sh"      # shared `todo` CLI -> dev's ~/.local/bin (writes as dev)
   "$REPO/claude/install.sh"    # dev's agent context: box-local AGENTS.md, skills, memory -> ~/.agents + ~/.dsh (writes as dev)
   "$REPO/../dev-env/install.sh"  # shared dev config layer: portable skills/cc/ds/memories + dsh plugin (writes as dev)
+  "$REPO/steam-tracker/install.sh"  # steam-price-tracker venv build + daily timer (self-guards on the sibling clone)
+  "$REPO/wrf-probe/install.sh"      # WRFrontiersDB-Orchestrator venv build + patch-probe timer (self-guards on the sibling clone)
 )
 # Valheim subsystem lives in the sibling valheim-server repo — include it only if that
 # clone is present (its systemd units + agent context; root, drops to dev where needed).

@@ -13,8 +13,16 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   commit — event-driven, the home-server twin of the workstation's todo-sync.path),
   `hs-wrf-discount-watch.{service,timer}` (poll the WRF news feed 4x/day: scrape the
   latest posts, and on a new weekly discount dispatch the discount-visualizer — see
-  the WRFrontiers-News-Scraper repo; enabled only when that clone is present), and
-  `install.sh` (unit installer).
+  the WRFrontiers-News-Scraper repo; enabled only when that clone is present),
+  `hs-steam-price-refresh.{service,timer}` (daily Steam price refresh + at/below-threshold
+  email alerts — see the `steam-tracker/` area and the steam-price-tracker repo; enabled
+  when that clone's venv is built), and `install.sh` (unit installer).
+- `steam-tracker/` — the Steam price-tracker subsystem's box-local config: the
+  config-as-code tracked-app list (`tracked_apps.json`, edited via the `add-steam-app`
+  skill), the SMTP secret template (`steam-tracker.env.example` → live
+  `/etc/home-server/steam-tracker.env`, root 600), and `install.sh` (builds the generic
+  `steam-price-tracker` clone's venv + arms the daily timer). The tracker *code* is the
+  generic sibling clone `/srv/dev/repos/steam-price-tracker`.
 - `todo/` — this box is the hub + classifier for the shared cross-box `todo` store
   (bare repo `/srv/dev/repos/todo.git` + working clone). `classify-drain.sh` runs the
   classify job (pull hub, classify, push meta). Push-back to the workstation is not
