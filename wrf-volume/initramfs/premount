@@ -76,7 +76,10 @@ if ! _o=$(lvm lvcreate -y -L "$WRF_SIZE" -n "$WRF_LV" "$VG" 2>&1); then
   log "lvcreate $WRF_LV failed [$_o]; boot continues (retried next boot)"; exit 0
 fi
 log "created $VG/$WRF_LV ($WRF_SIZE)"
-if ! _o=$(mkfs.ext4 -F -L wrfdata "$WRF_DEV" 2>&1); then
+# Call mkfs.ext4 by ABSOLUTE path: the bare name resolves to busybox's applet in the
+# initramfs ("applet not found"), not the real e2fsprogs binary the hook bundled.
+MKFS=/sbin/mkfs.ext4; [ -x "$MKFS" ] || MKFS=/usr/sbin/mkfs.ext4
+if ! _o=$("$MKFS" -F -L wrfdata "$WRF_DEV" 2>&1); then
   log "mkfs.ext4 failed [$_o]; boot continues"; exit 0
 fi
 log "formatted $WRF_LV"
