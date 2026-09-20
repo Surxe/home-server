@@ -48,6 +48,7 @@ INSTALLERS=(
   "$REPO/../dev-env/install.sh"  # shared dev config layer: portable skills/cc/ds/memories + dsh plugin (writes as dev)
   "$REPO/steam-tracker/install.sh"  # steam-price-tracker venv build + daily timer (self-guards on the sibling clone)
   "$REPO/wrf-probe/install.sh"      # WRFrontiersDB-Orchestrator venv build + patch-probe timer (self-guards on the sibling clone)
+  "$REPO/wrf-gpu/install.sh"        # host GPU/export deps (RADV + gamescope + dev GPU groups/linger) for the mapper stage
 )
 # Valheim subsystem lives in the sibling valheim-server repo — include it only if that
 # clone is present (its systemd units + agent context; root, drops to dev where needed).
