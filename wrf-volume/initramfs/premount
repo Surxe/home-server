@@ -26,7 +26,11 @@ ROOT_TARGET=40G        # final pve/root LV size (was 96G; ~9.4G used)
 ROOT_FS_PRESHRINK=38G  # shrink the fs below the LV target first (safety margin)
 WRF_SIZE=68G           # thick data volume carved from the freed extents
 
-log(){ echo "[wrf-provision] $*"; }
+# Log to both console and the kernel ring buffer (/dev/kmsg persists into dmesg /
+# `journalctl -k` after boot, which console echoes do not).
+log(){ echo "[wrf-provision] $*"; echo "[wrf-provision] $*" > /dev/kmsg 2>/dev/null || true; }
+
+log "START (root_dev=$ROOT_DEV vg=$VG)"
 
 # Already provisioned? -> nothing to do (this is the one-shot's self-disable).
 if lvm lvs --noheadings -o lv_name "$VG/$WRF_LV" >/dev/null 2>&1; then
@@ -38,12 +42,17 @@ log "provisioning: shrink $VG/root -> $ROOT_TARGET, then create $VG/$WRF_LV ($WR
 lvm vgchange -ay "$VG" >/dev/null 2>&1 || { log "vgchange failed; boot continues, root intact"; exit 0; }
 
 # 1. Force-check, then shrink the ROOT FS first (never the LV first).
-if ! e2fsck -fy "$ROOT_DEV"; then
-  log "e2fsck failed; skipping shrink (root intact)"; exit 0
+# e2fsck exit codes are a bitmask: 0=clean, 1=errors corrected, 2=corrected+reboot;
+# only bit 2 (value>=4) means uncorrected/fatal. Treat <4 as OK.
+e2fsck -fy "$ROOT_DEV"; _fsck_rc=$?
+if [ "$_fsck_rc" -ge 4 ]; then
+  log "e2fsck rc=$_fsck_rc (uncorrected errors); skipping shrink (root intact)"; exit 0
 fi
+log "e2fsck rc=$_fsck_rc (ok)"
 if ! resize2fs "$ROOT_DEV" "$ROOT_FS_PRESHRINK"; then
   log "resize2fs shrink failed; skipping (root fs intact)"; exit 0
 fi
+log "root fs shrunk to $ROOT_FS_PRESHRINK"
 
 # 2. Shrink the LV to target (fs is now smaller than this -> safe).
 if ! lvm lvreduce -f -L "$ROOT_TARGET" "$VG/root"; then
@@ -51,6 +60,7 @@ if ! lvm lvreduce -f -L "$ROOT_TARGET" "$VG/root"; then
   resize2fs "$ROOT_DEV" || true
   exit 0
 fi
+log "root LV reduced to $ROOT_TARGET"
 
 # 3. Grow the fs to fill the (now 40G) LV. A failure here just leaves it at 38G.
 resize2fs "$ROOT_DEV" || log "grow-to-fill warned; root fs stays at $ROOT_FS_PRESHRINK (still fine)"
@@ -59,9 +69,11 @@ resize2fs "$ROOT_DEV" || log "grow-to-fill warned; root fs stays at $ROOT_FS_PRE
 if ! lvm lvcreate -y -L "$WRF_SIZE" -n "$WRF_LV" "$VG"; then
   log "lvcreate $WRF_LV failed; boot continues (retried next boot)"; exit 0
 fi
+log "created $VG/$WRF_LV ($WRF_SIZE)"
 if ! mkfs.ext4 -F -L wrfdata "/dev/$VG/$WRF_LV"; then
   log "mkfs.ext4 failed; boot continues"; exit 0
 fi
+log "formatted $WRF_LV"
 
 # 5. Breadcrumb inside the new fs, for post-reboot evidence.
 _m=/wrf-provision-mnt
