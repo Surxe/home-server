@@ -1,0 +1,17 @@
+[Unit]
+Description=Poll Steam PICS for a new WR:Frontiers patch (every 20 min, home-server)
+Documentation=https://github.com/Surxe/WRFrontiersDB-Orchestrator
+
+[Timer]
+# Every 20 minutes. The probe is cheap (~2s, one anonymous PICS query) and dedups
+# on its own last-seen GID, so a tight cadence just shortens the worst-case delay
+# between a patch shipping and us noticing it — with no cost to reprocessing.
+OnCalendar=*:0/20
+# Spread the query off the exact minute boundary (avoid hammering a CM on the dot).
+RandomizedDelaySec=120
+# Catch up after downtime (box may have been off/asleep at a slot). A single
+# catch-up run is enough — the check is stateless beyond its own GID file.
+Persistent=true
+
+[Install]
+WantedBy=timers.target
