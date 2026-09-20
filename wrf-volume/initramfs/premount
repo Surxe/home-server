@@ -22,6 +22,7 @@ esac
 VG=pve
 ROOT_DEV=/dev/mapper/pve-root
 WRF_LV=wrf
+WRF_DEV=/dev/mapper/pve-wrf   # dm node LVM creates on activation (like pve-root); no udev needed
 ROOT_TARGET=40G        # final pve/root LV size (was 96G; ~9.4G used)
 ROOT_FS_PRESHRINK=38G  # shrink the fs below the LV target first (safety margin)
 WRF_SIZE=68G           # thick data volume carved from the freed extents
@@ -39,7 +40,12 @@ if lvm lvs --noheadings -o lv_name "$VG/$WRF_LV" >/dev/null 2>&1; then
 fi
 
 log "provisioning: shrink $VG/root -> $ROOT_TARGET, then create $VG/$WRF_LV ($WRF_SIZE)"
-lvm vgchange -ay "$VG" >/dev/null 2>&1 || { log "vgchange failed; boot continues, root intact"; exit 0; }
+# Do NOT `vgchange -ay pve`: the VG contains a thin pool (pve/data) that the minimal
+# initramfs cannot activate (no thin_check / dm-thin-pool module), which returns
+# non-zero and previously aborted us. We don't need it — pve/root is already active
+# (we booted from it), and lvreduce(root) + lvcreate(new THICK wrf) operate on VG
+# metadata + free extents without touching the thin pool. Best-effort activate root.
+lvm lvchange -ay "$VG/root" >/dev/null 2>&1 || true
 
 # 1. Force-check, then shrink the ROOT FS first (never the LV first).
 # e2fsck exit codes are a bitmask: 0=clean, 1=errors corrected, 2=corrected+reboot;
@@ -55,8 +61,8 @@ fi
 log "root fs shrunk to $ROOT_FS_PRESHRINK"
 
 # 2. Shrink the LV to target (fs is now smaller than this -> safe).
-if ! lvm lvreduce -f -L "$ROOT_TARGET" "$VG/root"; then
-  log "lvreduce failed; regrowing fs to fill the LV, boot continues"
+if ! _o=$(lvm lvreduce -f -L "$ROOT_TARGET" "$VG/root" 2>&1); then
+  log "lvreduce failed [$_o]; regrowing fs to fill the LV, boot continues"
   resize2fs "$ROOT_DEV" || true
   exit 0
 fi
@@ -66,19 +72,19 @@ log "root LV reduced to $ROOT_TARGET"
 resize2fs "$ROOT_DEV" || log "grow-to-fill warned; root fs stays at $ROOT_FS_PRESHRINK (still fine)"
 
 # 4. Carve the thick WRF data volume from the freed extents + format it.
-if ! lvm lvcreate -y -L "$WRF_SIZE" -n "$WRF_LV" "$VG"; then
-  log "lvcreate $WRF_LV failed; boot continues (retried next boot)"; exit 0
+if ! _o=$(lvm lvcreate -y -L "$WRF_SIZE" -n "$WRF_LV" "$VG" 2>&1); then
+  log "lvcreate $WRF_LV failed [$_o]; boot continues (retried next boot)"; exit 0
 fi
 log "created $VG/$WRF_LV ($WRF_SIZE)"
-if ! mkfs.ext4 -F -L wrfdata "/dev/$VG/$WRF_LV"; then
-  log "mkfs.ext4 failed; boot continues"; exit 0
+if ! _o=$(mkfs.ext4 -F -L wrfdata "$WRF_DEV" 2>&1); then
+  log "mkfs.ext4 failed [$_o]; boot continues"; exit 0
 fi
 log "formatted $WRF_LV"
 
 # 5. Breadcrumb inside the new fs, for post-reboot evidence.
 _m=/wrf-provision-mnt
 mkdir -p "$_m"
-if mount "/dev/$VG/$WRF_LV" "$_m" 2>/dev/null; then
+if mount "$WRF_DEV" "$_m" 2>/dev/null; then
   { echo "provisioned by wrf-volume initramfs one-shot"; date -u 2>/dev/null || true; \
     echo "root_target=$ROOT_TARGET wrf_size=$WRF_SIZE"; } > "$_m/.wrf-provisioned" 2>/dev/null || true
   umount "$_m" 2>/dev/null || true
