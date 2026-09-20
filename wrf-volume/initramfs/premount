@@ -1,0 +1,98 @@
+#!/bin/sh
+# local-premount ONE-SHOT: shrink pve/root and carve a thick pve/wrf data volume
+# for the WRF pipeline, while root is still UNMOUNTED (early boot). This is the only
+# safe place to shrink the root filesystem on a box that has no console/rescue.
+#
+# Safety design:
+#   * IDEMPOTENT — does nothing once pve/wrf exists (natural LVM-visible guard), so
+#     it self-disables after the first successful run.
+#   * FS-BEFORE-LV — the root fs is always shrunk before the LV, and the LV is only
+#     ever reduced to a size LARGER than the fs, so every partial/failed state still
+#     leaves a mountable root.
+#   * ABORT-SAFE — on ANY error it logs and returns 0, letting the normal boot
+#     continue with root intact. It never leaves root smaller than its fs.
+#
+# Installed by wrf-volume/provision-shrink.sh; removed by the post-reboot cleanup.
+PREREQ=""
+prereqs(){ echo "$PREREQ"; }
+case "$1" in
+  prereqs) prereqs; exit 0 ;;
+esac
+
+VG=pve
+ROOT_DEV=/dev/mapper/pve-root
+WRF_LV=wrf
+WRF_DEV=/dev/mapper/pve-wrf   # dm node LVM creates on activation (like pve-root); no udev needed
+ROOT_TARGET=40G        # final pve/root LV size (was 96G; ~9.4G used)
+ROOT_FS_PRESHRINK=38G  # shrink the fs below the LV target first (safety margin)
+WRF_SIZE=68G           # thick data volume carved from the freed extents
+
+# Log to both console and the kernel ring buffer (/dev/kmsg persists into dmesg /
+# `journalctl -k` after boot, which console echoes do not).
+log(){ echo "[wrf-provision] $*"; echo "[wrf-provision] $*" > /dev/kmsg 2>/dev/null || true; }
+
+log "START (root_dev=$ROOT_DEV vg=$VG)"
+
+# Already provisioned? -> nothing to do (this is the one-shot's self-disable).
+if lvm lvs --noheadings -o lv_name "$VG/$WRF_LV" >/dev/null 2>&1; then
+  log "$VG/$WRF_LV already exists — skipping."
+  exit 0
+fi
+
+log "provisioning: shrink $VG/root -> $ROOT_TARGET, then create $VG/$WRF_LV ($WRF_SIZE)"
+# Do NOT `vgchange -ay pve`: the VG contains a thin pool (pve/data) that the minimal
+# initramfs cannot activate (no thin_check / dm-thin-pool module), which returns
+# non-zero and previously aborted us. We don't need it — pve/root is already active
+# (we booted from it), and lvreduce(root) + lvcreate(new THICK wrf) operate on VG
+# metadata + free extents without touching the thin pool. Best-effort activate root.
+lvm lvchange -ay "$VG/root" >/dev/null 2>&1 || true
+
+# 1. Force-check, then shrink the ROOT FS first (never the LV first).
+# e2fsck exit codes are a bitmask: 0=clean, 1=errors corrected, 2=corrected+reboot;
+# only bit 2 (value>=4) means uncorrected/fatal. Treat <4 as OK.
+e2fsck -fy "$ROOT_DEV"; _fsck_rc=$?
+if [ "$_fsck_rc" -ge 4 ]; then
+  log "e2fsck rc=$_fsck_rc (uncorrected errors); skipping shrink (root intact)"; exit 0
+fi
+log "e2fsck rc=$_fsck_rc (ok)"
+if ! resize2fs "$ROOT_DEV" "$ROOT_FS_PRESHRINK"; then
+  log "resize2fs shrink failed; skipping (root fs intact)"; exit 0
+fi
+log "root fs shrunk to $ROOT_FS_PRESHRINK"
+
+# 2. Shrink the LV to target (fs is now smaller than this -> safe).
+if ! _o=$(lvm lvreduce -f -L "$ROOT_TARGET" "$VG/root" 2>&1); then
+  log "lvreduce failed [$_o]; regrowing fs to fill the LV, boot continues"
+  resize2fs "$ROOT_DEV" || true
+  exit 0
+fi
+log "root LV reduced to $ROOT_TARGET"
+
+# 3. Grow the fs to fill the (now 40G) LV. A failure here just leaves it at 38G.
+resize2fs "$ROOT_DEV" || log "grow-to-fill warned; root fs stays at $ROOT_FS_PRESHRINK (still fine)"
+
+# 4. Carve the thick WRF data volume from the freed extents + format it.
+if ! _o=$(lvm lvcreate -y -L "$WRF_SIZE" -n "$WRF_LV" "$VG" 2>&1); then
+  log "lvcreate $WRF_LV failed [$_o]; boot continues (retried next boot)"; exit 0
+fi
+log "created $VG/$WRF_LV ($WRF_SIZE)"
+# Call mkfs.ext4 by ABSOLUTE path: the bare name resolves to busybox's applet in the
+# initramfs ("applet not found"), not the real e2fsprogs binary the hook bundled.
+MKFS=/sbin/mkfs.ext4; [ -x "$MKFS" ] || MKFS=/usr/sbin/mkfs.ext4
+if ! _o=$("$MKFS" -F -L wrfdata "$WRF_DEV" 2>&1); then
+  log "mkfs.ext4 failed [$_o]; boot continues"; exit 0
+fi
+log "formatted $WRF_LV"
+
+# 5. Breadcrumb inside the new fs, for post-reboot evidence.
+_m=/wrf-provision-mnt
+mkdir -p "$_m"
+if mount "$WRF_DEV" "$_m" 2>/dev/null; then
+  { echo "provisioned by wrf-volume initramfs one-shot"; date -u 2>/dev/null || true; \
+    echo "root_target=$ROOT_TARGET wrf_size=$WRF_SIZE"; } > "$_m/.wrf-provisioned" 2>/dev/null || true
+  umount "$_m" 2>/dev/null || true
+fi
+rmdir "$_m" 2>/dev/null || true
+
+log "WRF volume provisioning complete."
+exit 0

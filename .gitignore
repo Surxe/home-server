@@ -11,3 +11,5 @@ valheim/mod-update-history.csv
 *.swp
 *~
 .DS_Store
+# Personal working notes / scratch (never committed) — e.g. the WRF-port checklist.
+personal/
