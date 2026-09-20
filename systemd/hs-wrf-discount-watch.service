@@ -13,6 +13,10 @@ Type=oneshot
 # resolve under systemd, matching the other hs-* dev units.
 User=dev
 Environment=HOME=/home/dev
+# Run from the clone so the scripts' relative defaults (archive/, data/) resolve
+# inside it. Without this, archive.py --out's default `archive` is created against
+# systemd's CWD (/), which dev can't write -> PermissionError before step 2 runs.
+WorkingDirectory=/srv/dev/repos/WRFrontiers-News-Scraper
 # Dispatch is ON: the Jev mapping system is calibrated (accept threshold 0.7),
 # thresholds are set, and the prompt handles Relic disambiguation. Ready to run unattended.
 Environment=WRF_DISPATCH=1
