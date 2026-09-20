@@ -1,0 +1,24 @@
+#!/bin/sh
+# initramfs hook: bundle the e2fsprogs tools the WRF-volume premount one-shot needs
+# (resize2fs / mkfs.ext4 / e2fsck). lvm is already included by the lvm2 hook because
+# root is on LVM; copy it too, defensively. Installed by provision-shrink.sh.
+PREREQ=""
+prereqs(){ echo "$PREREQ"; }
+case "$1" in
+  prereqs) prereqs; exit 0 ;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+copy_exec /sbin/resize2fs
+copy_exec /sbin/e2fsck
+copy_exec /sbin/mke2fs
+copy_exec /sbin/mkfs.ext4
+copy_exec /sbin/fsck.ext4
+copy_exec /sbin/lvm
+
+# mkfs.ext4 reads its defaults from mke2fs.conf.
+if [ -f /etc/mke2fs.conf ]; then
+  mkdir -p "$DESTDIR/etc"
+  cp -a /etc/mke2fs.conf "$DESTDIR/etc/mke2fs.conf"
+fi
