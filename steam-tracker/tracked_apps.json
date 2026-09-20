@@ -16,11 +16,15 @@
     "threshold": 20.0
   },
   "2322010": {
-    "name": "God of War Ragnarök",
+    "name": "God of War Ragnar\u00f6k",
     "threshold": 20.0
   },
   "2075800": {
-    "name": "STAR WARS Zero Company™",
+    "name": "STAR WARS Zero Company\u2122",
     "threshold": 20.0
+  },
+  "2384071": {
+    "name": "Remnant II\u00ae - DLC Bundle",
+    "threshold": 15.0
   }
 }
