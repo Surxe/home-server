@@ -31,7 +31,26 @@ Old patch versions pruned (keep 2 most recent)
 
 - **`install.sh`** — idempotent deployment script
   - Installs service unit to `/etc/systemd/system/wrf-orchestrator@.service`
+  - Writes a `10-node-path.conf` drop-in that puts nvm's node bin on the service PATH (resolved at install time, so nvm version bumps are picked up on re-install)
   - Verifies secrets file exists (warns if missing)
+  - Wires the SITE stage (see below)
+
+## SITE stage (Astro build via nvm)
+
+The SITE stage runs `npm run build` in `WRFrontiersDB-Site`. Node is provided by
+**nvm** for the `dev` user — the installer resolves nvm's node bin dir and puts it on
+the service PATH via the drop-in, so `npm` resolves without sourcing nvm at runtime.
+EXPORT and PARSE don't need node and run off the unit's own PATH.
+
+The installer also sets up the build's inputs (all gitignored / not tracked in the Site repo):
+
+- **Data symlinks** → sibling Data repo:
+  - `WRFrontiersDB-Site/WRFrontiersDB-Data` — build reads JSON via `process.cwd()/WRFrontiersDB-Data/current/...`
+  - `WRFrontiersDB-Site/public/WRFrontiersDB-Data` — textures served as `/WRFrontiersDB-Data/textures/*.png`
+- **`vendor/wrf-design` submodule** — `git submodule update --init` (design tokens / CSS)
+- **npm deps** — `npm ci` (only when `package-lock.json` is newer than `node_modules`)
+
+Validated 2026-09-20: 650 pages build in ~23s on this box under the service's exact PATH.
 
 ## Secrets Setup
 

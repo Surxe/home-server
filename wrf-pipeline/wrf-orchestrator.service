@@ -14,7 +14,8 @@ ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/run.py 
 # Secrets: STEAM_USERNAME, STEAM_PASSWORD, GH_DATA_REPO_PAT
 EnvironmentFile=/etc/home-server/wrf-orchestrator.env
 
-# GPU runtime for headless mapper
+# GPU runtime for headless mapper. This PATH serves EXPORT/PARSE; the SITE stage's
+# `npm` is added by the install-time drop-in 10-node-path.conf (nvm's node bin dir).
 Environment="XDG_RUNTIME_DIR=/run/user/1000"
 Environment="PATH=/usr/games:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
