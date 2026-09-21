@@ -18,12 +18,17 @@ Environment=HOME=/home/dev
 WorkingDirectory=/srv/dev/repos/WRFrontiersDB-Orchestrator
 # The probe is anonymous — no secrets, no EnvironmentFile. It queries Steam PICS,
 # compares the public depot manifest GID against its own state file, and reports
-# via exit code: 0 = no change, 10 = new patch, 1 = probe error (treated as no
-# change; state left untouched). It does NOT trigger the pipeline yet — wiring the
-# orchestrator trigger is a separate later PR.
+# via exit code: 0 = no change, 10 = new patch handed off, 1 = probe error OR a
+# failed hand-off (state left untouched either way, so the next poll retries).
+#
+# On a new patch it hands off to --on-patch-cmd with {version} substituted (the
+# probe derives the version). We start the orchestrator instance non-blocking, so
+# the poll returns at once and the 30+ min pipeline runs as its own unit. dev has
+# NOPASSWD sudo on this box; `sudo -n` guarantees the service never blocks on a
+# prompt. The probe only advances its state once this start is accepted.
 #
 # SuccessExitStatus=10 so a detected patch (exit 10) is a *successful* run, not a
-# unit failure. Only exit 1 (a real probe error) marks the unit failed.
+# unit failure. Only exit 1 (a probe error or failed hand-off) marks the unit failed.
 SuccessExitStatus=10
-ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/probe.py
+ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/probe.py --on-patch-cmd "sudo -n systemctl start --no-block wrf-orchestrator@{version}.service"
 TimeoutStartSec=120

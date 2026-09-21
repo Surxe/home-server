@@ -81,25 +81,42 @@ Monitor the run in real-time:
 sudo journalctl -u wrf-orchestrator@2026-08-22 -f
 ```
 
-View the full orchestrator logs in `/srv/dev/wrf/logs/orchestrator/2026-08-22/`.
+View the full orchestrator logs under `/srv/dev/wrf/logs/{YYYY-MM-DD_HHMMSS}/` (see Logging).
 
 ## Probe Integration (Section F)
 
-The PICS probe (in the sibling `PICS` repo) is responsible for:
+The patch probe is `src/probe.py` in the `WRFrontiersDB-Orchestrator` clone, run on a
+timer by the `hs-wrf-update-probe.service`/`.timer` units (see `../systemd/`). It does
+an anonymous Steam PICS check, and on a new public manifest GID it:
 
-1. Detecting when a new patch is available for WRFrontiers
-2. On detection (exit 10), extracting the patch version (ISO date, e.g., `2026-08-22`)
-3. Triggering the orchestrator service:
-   ```bash
-   systemctl start wrf-orchestrator@{detected_version}.service
+1. Derives the version id from the manifest's unix timestamp (UTC day, `yyyy-mm-dd`,
+   with a `-N` suffix for a 2nd+ patch the same day — see the orchestrator's
+   `src/versioning.py`).
+2. Hands off via its `--on-patch-cmd`, which `hs-wrf-update-probe.service` sets to:
    ```
+   sudo -n systemctl start --no-block wrf-orchestrator@{version}.service
+   ```
+   The probe substitutes `{version}` and runs it (shell-free). `--no-block` returns
+   at once, so the poll doesn't wait for the 30+ min pipeline.
+3. Only advances its state (marks the GID seen) **after** the hand-off is accepted.
 
 ### Probe Exit Codes
 
-- **Exit 0** — No new patch
-- **Exit 10** — New patch detected; orchestrator service should be triggered with the detected version
+- **Exit 0** — No new patch (or first-run baseline).
+- **Exit 10** — New patch detected **and handed off**; state advanced.
+- **Exit 1** — Probe error *or a failed hand-off*. State is left untouched, so the
+  next poll re-detects and retries. The version assignment is idempotent, so the
+  retry reuses the same version id.
 
-The probe can inject the detected version into the service start command via a wrapper script or directly via `systemctl`.
+`SuccessExitStatus=10` in the probe unit means a detected patch is a *successful*
+run; only exit 1 marks the unit failed.
+
+### Manual trigger
+
+The hand-off is just `systemctl start`, so a patch can always be run by hand:
+```bash
+sudo systemctl start wrf-orchestrator@2026-09-15.service
+```
 
 ## Data Retention (t-0122)
 
@@ -119,8 +136,8 @@ Typical footprint after pruning:
 
 ## Workflow on Patch Day
 
-1. **PICS probe runs** (timer or event-driven)
-2. **Probe detects patch** → exits 10, calls `systemctl start wrf-orchestrator@{version}.service`
+1. **Probe runs** (`hs-wrf-update-probe.timer`)
+2. **Probe detects patch** → derives `{version}`, runs `sudo -n systemctl start --no-block wrf-orchestrator@{version}.service`, advances state, exits 10
 3. **Orchestrator service starts**:
    - Verifies WRF data volume is mounted
    - Loads secrets from `/etc/home-server/wrf-orchestrator.env`
