@@ -1,0 +1,37 @@
+[Unit]
+Description=WRF Pipeline Orchestrator
+Documentation=file:///srv/dev/repos/WRFrontiersDB-Orchestrator/README.md
+After=network-online.target /srv/dev/wrf
+Requires=/srv/dev/wrf
+
+[Service]
+Type=oneshot
+User=dev
+Group=dev
+WorkingDirectory=/srv/dev/repos/WRFrontiersDB-Orchestrator
+ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/run.py --patch-day --game-version=%i
+
+# Secrets: STEAM_USERNAME, STEAM_PASSWORD, GH_DATA_REPO_PAT
+EnvironmentFile=/etc/home-server/wrf-orchestrator.env
+
+# GPU runtime for headless mapper. This PATH serves EXPORT/PARSE; the SITE stage's
+# `npm` is added by the install-time drop-in 10-node-path.conf (nvm's node bin dir).
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="PATH=/usr/games:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
+# Suppress inherited DISPLAY (pure headless)
+UnsetEnvironment=DISPLAY
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wrf-orchestrator
+
+# Timeouts: the export stage can take 30+ minutes (Proton startup, mapper dump)
+TimeoutStartSec=3600
+
+# Restart on failure (one retry after 5 minutes)
+Restart=on-failure
+RestartSec=300
+StartLimitIntervalSec=600
+StartLimitBurst=1

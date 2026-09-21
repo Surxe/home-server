@@ -50,6 +50,7 @@ INSTALLERS=(
   "$REPO/wrf-probe/install.sh"      # WRFrontiersDB-Orchestrator venv build + patch-probe timer (self-guards on the sibling clone)
   "$REPO/wrf-gpu/install.sh"        # host GPU/export deps (RADV + gamescope + dev GPU groups/linger) for the mapper stage
   "$REPO/wrf-volume/install.sh"     # /srv/dev/wrf data-volume fstab mount (nofail; one-time carve is provision-shrink.sh)
+  "$REPO/wrf-pipeline/install.sh"   # WRF orchestrator systemd service (triggered by probe on patch detection)
 )
 # Valheim subsystem lives in the sibling valheim-server repo — include it only if that
 # clone is present (its systemd units + agent context; root, drops to dev where needed).
