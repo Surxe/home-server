@@ -128,6 +128,33 @@ Typical footprint after pruning:
 4. **Pipeline succeeds** → old versions are pruned
 5. **Logs are captured** in journalctl (search by service name or unit)
 
+## Logging
+
+The orchestrator writes logs to two places, teed in real-time (no block-buffering):
+
+**Journalctl** — all subprocess output (export, parse, site stages)
+```bash
+sudo journalctl -u wrf-orchestrator@2026-09-15 -f              # live
+sudo journalctl -u wrf-orchestrator@2026-09-15 -n 100         # last 100 lines
+sudo journalctl -u 'wrf-orchestrator@*' -f                     # all runs
+```
+
+**Per-stage log files** — under `/srv/dev/wrf/logs/{YYYY-MM-DD_HHMMSS}/`
+- `run.log` — banners, stage start/stop markers
+- `01-export.log` — DepotDownloader, mapper, BatchExport
+- `02-parse.log` — JSON parsing, texture export
+- `03-site.log` — Astro build output (650 pages)
+
+Example after a run:
+```bash
+ls -la /srv/dev/wrf/logs/2026-09-20_190815/
+# run.log, 01-export.log, 02-parse.log, 03-site.log
+
+tail -50 /srv/dev/wrf/logs/2026-09-20_190815/01-export.log
+```
+
+Each run's logs live in its own timestamped directory, so multiple concurrent runs (if triggered in quick succession) don't interleave. Output streams line-by-line to both journalctl and disk.
+
 ## Troubleshooting
 
 ### Service won't start: "EnvironmentFile=/etc/home-server/wrf-orchestrator.env missing"
