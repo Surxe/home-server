@@ -9,7 +9,7 @@ Type=oneshot
 User=dev
 Group=dev
 WorkingDirectory=/srv/dev/repos/WRFrontiersDB-Orchestrator
-ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/run.py --patch-day --game-version=%i
+ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/run.py --patch-day --game-version=%i --log-dir /srv/dev/wrf/logs
 
 # Secrets: STEAM_USERNAME, STEAM_PASSWORD, GH_DATA_REPO_PAT
 EnvironmentFile=/etc/home-server/wrf-orchestrator.env
