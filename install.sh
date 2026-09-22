@@ -17,6 +17,23 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")" && pwd)"
 [ "$(id -u)" -eq 0 ] || { echo "run as root:  sudo $0"; exit 1; }
 
+# Log this run to a timestamped file and keep the last KEEP_LOGS runs (pruneable
+# logging). All stdout/stderr is tee'd, so the log captures the same output the
+# terminal shows. The very first line printed is the log path, so it's obvious
+# where to look afterwards.
+LOG_DIR="/var/log/home-server"
+KEEP_LOGS=10
+mkdir -p "$LOG_DIR"
+LOG_FILE="$LOG_DIR/install-$(date +%Y%m%d-%H%M%S).log"
+# Prune older logs first (before the new one exists), keeping the newest KEEP_LOGS.
+ls -1t "$LOG_DIR"/install-*.log 2>/dev/null | tail -n +$((KEEP_LOGS + 1)) | xargs -r rm -f || true
+exec > >(tee -a "$LOG_FILE") 2>&1
+# tee runs async via process substitution; wait for it on exit so no output is
+# lost/raced when the script finishes (otherwise even the first line can vanish).
+TEE_PID=$!
+trap 'exec >&- 2>&-; wait "$TEE_PID" 2>/dev/null' EXIT
+echo "logging to $LOG_FILE"
+
 echo "== home-server install =="
 
 # Refresh the shared dev-env clone first so this box deploys the latest shared
