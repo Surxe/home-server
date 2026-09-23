@@ -10,17 +10,30 @@ workstation and this box**. The workstation captures; **this box is the source o
 truth and the only place classification runs**. Design (three append-only streams,
 single-writer-per-box, derived classification-state) is in the todo repo's README.
 
-## Layout on this box
-- **Bare repo `/srv/dev/repos/todo.git`** — the hub / source of truth. Everyone
-  pushes/pulls it.
-- **Working clone `/srv/dev/repos/todo`** — owned by `dev`; its `hub` remote points
-  at the local bare (file path, no SSH). `classify` runs here.
-- **`home-server/todo/classify-drain.sh`** — the job: `git pull hub` → `todo classify`
-  (local `claude`, appends `meta.jsonl`) → `git push hub`. Runs as `dev`.
+## Layout on this box (code and DATA are SEPARATE repos since the split)
+- **Code repo `/srv/dev/repos/todo`** (`bin/todo` + the classify prompt) — tracks
+  **GitHub `Surxe/todo`**: `origin` = `https://github.com/Surxe/todo.git`; pull code
+  changes from there. It is NOT synced over any local bare. (The old bare
+  `/srv/dev/repos/todo.git` is a vestigial pre-split leftover — nothing feeds it any
+  more; don't point this clone at it.)
+- **DATA store `/srv/dev/repos/todo-store`** (the three streams) — owned by `dev`; its
+  `hub` remote is the **local bare `/srv/dev/repos/todo-store.git`** (file path, no SSH),
+  which the workstation pushes to over SSH. All classify git ops act on the store.
+- **`home-server/todo/classify-drain.sh`** — the job: `git pull hub` (the STORE) →
+  `todo classify` (local `claude`, appends `meta.jsonl`) → `git push hub`. Runs as `dev`.
 - **`hs-todo-classify.{service,timer}`** — runs the drain **daily at 13:00
   America/Chicago** (`User=dev`, `Persistent=true`). The workstation's `todo classify`
   also invokes this same script over SSH (its `TODO_REMOTE_CLASSIFY_CMD`), so classify
   happens here whether scheduled or triggered.
+
+## Gotcha: the code clone must track GitHub, not the local bare
+On 2026-09-23 this box's `todo` code clone (`/srv/dev/repos/todo`) still had
+`origin`/`hub` pointing at the pre-split local bare `/srv/dev/repos/todo.git`, so
+`git pull` + `todo/install.sh` kept redeploying a **stale `bin/todo`** — missing the
+`show latest` change that had been pushed to GitHub — with no warning. Fix was to
+re-point `origin` at `Surxe/todo` and fast-forward. `todo/install.sh` copies whatever
+is in the checkout without checking freshness, so **after a code change lands on the
+workstation, run `git -C /srv/dev/repos/todo pull` here before (re-)installing.**
 
 ## Deps this box needs (or classify silently does nothing)
 These are **required** for the drain; all were set manually during setup and are
