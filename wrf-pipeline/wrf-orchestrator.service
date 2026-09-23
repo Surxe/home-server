@@ -1,8 +1,11 @@
 [Unit]
 Description=WRF Pipeline Orchestrator
 Documentation=file:///srv/dev/repos/WRFrontiersDB-Orchestrator/README.md
-After=network-online.target /srv/dev/wrf
-Requires=/srv/dev/wrf
+After=network-online.target
+# Pull in and order after the WRF data-volume mount (WRF_ROOT). A raw path in
+# After=/Requires= is silently rejected ("Invalid argument"); RequiresMountsFor is
+# the correct form — it adds both the Requires and the After on srv-dev-wrf.mount.
+RequiresMountsFor=/srv/dev/wrf
 
 [Service]
 Type=oneshot
@@ -30,8 +33,7 @@ SyslogIdentifier=wrf-orchestrator
 # Timeouts: the export stage can take 30+ minutes (Proton startup, mapper dump)
 TimeoutStartSec=3600
 
-# Restart on failure (one retry after 5 minutes)
-Restart=on-failure
-RestartSec=300
-StartLimitIntervalSec=600
-StartLimitBurst=1
+# No auto-restart: this is Type=oneshot (Restart= is a no-op for oneshot anyway), and
+# a failed pipeline should stay failed and visible rather than silently re-run. Failure
+# debugging will come via email logging (planned), not blind retries. The probe fires
+# each patch exactly once (GID dedup), so the next start is the next real patch.
