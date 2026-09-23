@@ -70,6 +70,20 @@ APPS=/srv/dev/repos/home-server/steam-tracker/tracked_apps.json
      .venv/bin/python -m steam_price_tracker.registry add <app_id> --name "<full product name>" --threshold <usd>
    ```
 
+   **Priceability guard.** `registry add` first probes Steam for a current US
+   price. If there is one it prints it (a nice confirmation) and proceeds. If
+   Steam lists **no** US price — free, unreleased, region-locked, or a dynamic
+   "complete the set" bundle (Steam returns `"data": []` for these) — it
+   **refuses and exits 3 without registering**, because such an app can be
+   tracked but will never price or alert (and used to crash the whole refresh).
+   Surface that to the user; only re-run with `--force` if they explicitly want
+   it tracked anyway:
+
+   ```bash
+   STEAM_TRACKER_APPS_PATH="$APPS" \
+     .venv/bin/python -m steam_price_tracker.registry add <app_id> --name "<full product name>" --force
+   ```
+
    Idempotent: an already-present id reports "already registered" and changes
    nothing. To add/change a threshold later:
 
