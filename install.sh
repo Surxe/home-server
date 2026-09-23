@@ -28,6 +28,34 @@ WARNINGS=()
 FAILED=()
 warn(){ echo "!! $*" >&2; WARNINGS+=("$*"); }
 
+# --- self-sync: fast-forward THIS home-server repo to origin before deploying, so a
+#     run always ships the latest committed host config rather than a stale checkout
+#     (the shared dev-env + valheim-server clones get the same refresh further down).
+#     We fetch once, then fast-forward ONLY if the branch is purely behind its upstream
+#     — a dirty tree or a diverged history is left untouched and merely reported, so
+#     local work is never clobbered. Git runs as dev because the repo is dev-owned (a
+#     root pull would leave root-owned objects behind). Because this script lives in the
+#     repo being updated, a fast-forward that moves HEAD is followed by an exec of the
+#     refreshed install.sh so the rest of the run uses the new tree; HS_SELF_SYNCED
+#     guards against an exec loop. Runs before logging so the aborted first pass leaves
+#     no stray log — the re-exec'd run writes the real one.
+if [ -z "${HS_SELF_SYNCED:-}" ] && [ -d "$REPO/.git" ]; then
+  runuser -u dev -- git -C "$REPO" fetch -q origin 2>/dev/null || true
+  hs_base="$(runuser -u dev -- git -C "$REPO" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
+  if [ -n "$hs_base" ]; then
+    hs_behind="$(runuser -u dev -- git -C "$REPO" rev-list --count "HEAD..$hs_base" 2>/dev/null || echo 0)"
+    hs_ahead="$(runuser -u dev -- git -C "$REPO" rev-list --count "$hs_base..HEAD" 2>/dev/null || echo 0)"
+    if [ "${hs_behind:-0}" -gt 0 ]; then
+      if [ "${hs_ahead:-0}" -eq 0 ] && runuser -u dev -- git -C "$REPO" merge --ff-only -q "$hs_base" 2>/dev/null; then
+        echo ">> home-server fast-forwarded $hs_behind commit(s) to $hs_base — re-running install.sh"
+        exec env HS_SELF_SYNCED=1 bash "$0" "$@"
+      else
+        warn "home-server is $hs_behind commit(s) behind $hs_base but could not fast-forward (local commits or dirty tree) — continuing with current checkout"
+      fi
+    fi
+  fi
+fi
+
 # Log this run to a timestamped file and keep the last KEEP_LOGS runs (pruneable
 # logging). All stdout/stderr is tee'd, so the log captures the same output the
 # terminal shows. The very first line printed is the log path, so it's obvious
