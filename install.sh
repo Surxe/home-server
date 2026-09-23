@@ -17,6 +17,17 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")" && pwd)"
 [ "$(id -u)" -eq 0 ] || { echo "run as root:  sudo $0"; exit 1; }
 
+# Non-fatal problems are collected and replayed in an end-of-run summary rather
+# than left to scroll away mid-install. Unlike the workstation's install.sh, the
+# sub-installers here are independent scripts (two in sibling repos) with no shared
+# lib to source, so warn() lives only at THIS orchestrator level — child-emitted
+# messages aren't captured, only the orchestrator's own. FAILED collects steps that
+# exited non-zero (see the run loop); the install continues past each and exits
+# non-zero at the end if any failed.
+WARNINGS=()
+FAILED=()
+warn(){ echo "!! $*" >&2; WARNINGS+=("$*"); }
+
 # Log this run to a timestamped file and keep the last KEEP_LOGS runs (pruneable
 # logging). All stdout/stderr is tee'd, so the log captures the same output the
 # terminal shows. The very first line printed is the log path, so it's obvious
@@ -43,7 +54,7 @@ if [ -d "$REPO/../dev-env/.git" ]; then
   if runuser -u dev -- git -C "$REPO/../dev-env" pull --ff-only; then
     echo ">> dev-env clone updated"
   else
-    echo "!! dev-env clone update failed — continuing with existing checkout" >&2
+    warn "dev-env clone update failed — continuing with existing checkout"
   fi
 fi
 
@@ -53,7 +64,7 @@ if [ -d "$REPO/../valheim-server/.git" ]; then
   if runuser -u dev -- git -C "$REPO/../valheim-server" pull --ff-only; then
     echo ">> valheim-server clone updated"
   else
-    echo "!! valheim-server clone update failed — continuing with existing checkout" >&2
+    warn "valheim-server clone update failed — continuing with existing checkout"
   fi
 fi
 
@@ -74,21 +85,48 @@ INSTALLERS=(
 if [ -f "$REPO/../valheim-server/install.sh" ]; then
   INSTALLERS+=("$REPO/../valheim-server/install.sh")
 else
-  echo "!! valheim-server clone not found at $REPO/../valheim-server — skipping its install" >&2
+  warn "valheim-server clone not found at $REPO/../valheim-server — skipping its install"
 fi
 
 for inst in "${INSTALLERS[@]}"; do
+  # Resolve how to run this step; a missing installer is a config error, so record
+  # it and carry on rather than aborting the whole host install.
   if [ -x "$inst" ]; then
-    echo ">> $inst"
-    "$inst"
+    echo ">> $inst"; runner=("$inst")
   elif [ -f "$inst" ]; then
-    echo ">> bash $inst"
-    bash "$inst"
+    echo ">> bash $inst"; runner=(bash "$inst")
   else
-    echo "!! missing installer: $inst" >&2
-    exit 1
+    echo "!! missing installer: $inst — recording and continuing" >&2
+    FAILED+=("$inst (missing)")
+    continue
+  fi
+  # Per-installer failure isolation: a non-zero exit is recorded and the install
+  # CONTINUES (the `if` condition is set -e's standard exemption, so a failing step
+  # doesn't trip this orchestrator's set -e). The guarantee is per-installer: each
+  # sub-installer's own set -e still stops it at its first hard error.
+  if "${runner[@]}"; then :; else
+    rc=$?
+    FAILED+=("$inst (exit $rc)")
+    echo "!! installer FAILED (exit $rc) — continuing: $inst" >&2
   fi
 done
+
+# --- end-of-run summary: replay warnings, then failed installers, so neither gets
+#     lost in the scrollback. Exit non-zero if anything failed, so a caller (or the
+#     tee'd log's reader) can tell a run was only partially applied. ---
+if [ "${#WARNINGS[@]}" -gt 0 ]; then
+  echo
+  echo "== warnings (${#WARNINGS[@]}) =="
+  for w in "${WARNINGS[@]}"; do echo "   $w"; done
+fi
+if [ "${#FAILED[@]}" -gt 0 ]; then
+  echo
+  echo "== FAILED installers (${#FAILED[@]}) =="
+  for f in "${FAILED[@]}"; do echo "   $f"; done
+  echo
+  echo "== home-server install complete (with ${#FAILED[@]} failed) =="
+  exit 1
+fi
 
 echo
 echo "== home-server install complete =="
