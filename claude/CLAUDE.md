@@ -34,7 +34,7 @@ The goal is **small, focused sessions** instead of one giant one. So:
   `~/.claude/CLAUDE.md` and `~/.dsh/AGENTS.md`) is the top-level orientation for
   both Claude Code and the DeepSeek Harness on this box.
 - **Memory** carries per-subsystem state — start by reading the memory index at
-  `~/.agents/memory/MEMORY.md` (symlinked to `~/.claude/projects/-home-dev/memory/`),
+  `~/.agents/memory/MEMORY.md` (symlinked to `~/.claude/projects/-srv-dev/memory/`),
   then load only the note you need. The DeepSeek Harness reads the same notes from
   `~/.dsh/memory/` via the `memory-standard` plugin.
 - **Skills** encode repeatable procedures, shared from `~/.agents/skills/`. Notably
