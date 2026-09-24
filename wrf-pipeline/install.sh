@@ -48,6 +48,7 @@ if [ ! -f /etc/home-server/wrf-orchestrator.env ]; then
   echo "  !! Secrets file /etc/home-server/wrf-orchestrator.env not found."
   echo "  Template copied to /etc/home-server/wrf-orchestrator.env.example — fill in:"
   echo "    STEAM_USERNAME=<...>  STEAM_PASSWORD=<...>  GH_DATA_REPO_PAT=<...>"
+  echo "  Optional run-report email: SMTP_USER=<...> SMTP_PASSWORD=<...> EMAIL_TO=<...>"
 else
   echo "  ✓ secrets file exists"
 fi

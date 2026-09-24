@@ -27,6 +27,10 @@ Old patch versions pruned (keep 2 most recent)
 
 - **`wrf-orchestrator.env.example`** — secrets template (user must populate)
   - `STEAM_USERNAME`, `STEAM_PASSWORD`, `GH_DATA_REPO_PAT`
+  - Optional run-report email: `SMTP_USER`, `SMTP_PASSWORD`, `EMAIL_TO` (email is
+    sent only when all three are set; `SMTP_HOST`/`SMTP_PORT` default to
+    smtp.gmail.com:587). Independent of steam-tracker, but the same Gmail account +
+    App Password can back both.
   - Deployed to `/etc/home-server/wrf-orchestrator.env` (root 0600, never in repo)
 
 - **`install.sh`** — idempotent deployment script
@@ -61,11 +65,18 @@ cat > /etc/home-server/wrf-orchestrator.env <<EOF
 STEAM_USERNAME=<your-steam-username>
 STEAM_PASSWORD=<your-steam-password>
 GH_DATA_REPO_PAT=<your-github-pat>
+# Optional: run-report email (all three required to enable; same Gmail App
+# Password as steam-tracker is fine).
+SMTP_USER=<sender@gmail.com>
+SMTP_PASSWORD=<16-char-app-password>
+EMAIL_TO=<recipient@example.com>
 EOF
 sudo chmod 0600 /etc/home-server/wrf-orchestrator.env
 ```
 
-Same secrets model as `steam-tracker` and `restic` on this host.
+Same secrets model as `steam-tracker` and `restic` on this host. The run-report
+email needs the orchestrator's own email code — see WRFrontiersDB-Orchestrator
+(the `Email report` options) — plus the three `SMTP_*`/`EMAIL_TO` lines above.
 
 ## Manual Trigger
 

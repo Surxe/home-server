@@ -14,7 +14,9 @@ Group=dev
 WorkingDirectory=/srv/dev/repos/WRFrontiersDB-Orchestrator
 ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/run.py --patch-day --game-version=%i --log-dir /srv/dev/wrf/logs
 
-# Secrets: STEAM_USERNAME, STEAM_PASSWORD, GH_DATA_REPO_PAT
+# Secrets: STEAM_USERNAME, STEAM_PASSWORD, GH_DATA_REPO_PAT, and (optional, for the
+# run-report email) SMTP_USER, SMTP_PASSWORD, EMAIL_TO. EnvironmentFile loads every
+# line in the file, so the optional email vars just need to be present there.
 EnvironmentFile=/etc/home-server/wrf-orchestrator.env
 
 # GPU runtime for headless mapper. This PATH serves EXPORT/PARSE; the SITE stage's
@@ -35,5 +37,7 @@ TimeoutStartSec=3600
 
 # No auto-restart: this is Type=oneshot (Restart= is a no-op for oneshot anyway), and
 # a failed pipeline should stay failed and visible rather than silently re-run. Failure
-# debugging will come via email logging (planned), not blind retries. The probe fires
-# each patch exactly once (GID dedup), so the next start is the next real patch.
+# debugging comes via the orchestrator's run-report email (per-step warning/error
+# counts + file:// log links; enable by setting the SMTP_* vars above), not blind
+# retries. The probe fires each patch exactly once (GID dedup), so the next start is
+# the next real patch.
