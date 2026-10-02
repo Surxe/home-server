@@ -48,6 +48,9 @@ fi
 if [ -f "$SECRET" ]; then
   say "wrf-discord-bot: token present ($SECRET) — enabling + restarting $UNIT"
   systemctl enable "$UNIT"
+  # Clear a start-limit failure (5 failed starts in 10 min, e.g. a bad token or a
+  # missing intent) first, or systemd refuses the restart.
+  systemctl reset-failed "$UNIT" 2>/dev/null || true
   systemctl restart "$UNIT" && echo "  restarted $UNIT"
 else
   say "wrf-discord-bot: token NOT present — bot left disabled"
