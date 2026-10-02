@@ -1,9 +1,9 @@
 # 03 — Backups & archives
 
-Two goals: **cheap backup**, **cheap restore**. Four mechanisms exist on this box and
+Two goals: **cheap backup**, **cheap restore**. Five mechanisms exist on this box and
 they are easy to confuse — this is the map. Two are real backups to the **USB stick**
-(`/mnt/backup`, 227 GB), one is an **offsite** copy to Backblaze B2, and one
-(LVM snapshots) is a **local rollback point, not a backup at all**.
+(`/mnt/backup`, 227 GB), two are **offsite** copies to Backblaze B2 (the world, and the
+todo store), and one (LVM snapshots) is a **local rollback point, not a backup at all**.
 
 ## At a glance
 
@@ -12,7 +12,8 @@ they are easy to confuse — this is the map. Two are real backups to the **USB 
 | **LVM-thin snapshot** | Whole VM-100 disk, point-in-time (copy-on-write) | **Host** thin pool `pve/data` — *same disk, same box* | **Manual**, before each mod/game change | Only diverged blocks (≈0 at creation, grows over time) | **Seconds** (`qm rollback`) | Trivial one command — **but discards newer state**, and dies with the disk |
 | **vzdump** | **Entire** Valheim VM (OS + Docker + game install + world), consistent | USB stick `/mnt/backup/vzdump/*.vma.zst` | **Daily 04:00**, keep-last=6 (~6 days) | ~6–16 GB per image (zstd); ~40–90 GB for 6 | ~10–20 min (`qmrestore` a 16 GB image) | Moderate — restores the whole VM in one action. Most-restorable |
 | **restic → flash** | Host config (`/etc/pve`, fstab, network) + repo checkout + todo store hub (`todo-store.git`). **Not the world** (see note) | USB stick `/mnt/backup/restic-repo` (encrypted, dedup) | Twice daily 03:00 & 15:00, keep-within 14d + prune | Tiny — ~13 MB source; ~28 dedup'd snapshots ≈ **15–30 MB** | Seconds–minutes (single file); minutes (full) | Low — pick any snapshot/path. Needs restic password |
-| **restic → B2** | Valheim **world only** (`/srv/valheim/config`, 1.1 GB) | Backblaze B2 bucket (scoped key); **runs inside the VM** | Every other day 12:30 UTC, keep-within 14d + prune | Cloud, dedup; ~7 snapshots sharing chunks ≈ **1.5–2 GB total** | Minutes (download ~1 GB over the home link) | Low effort; small **B2 egress $** (~$0.01/GB). Needs key + restic password |
+| **restic → B2 (world)** | Valheim **world only** (`/srv/valheim/config`, 1.1 GB) | Backblaze B2 bucket (scoped key); **runs inside the VM** | Every other day 12:30 UTC, keep-within 14d + prune | Cloud, dedup; ~7 snapshots sharing chunks ≈ **1.5–2 GB total** | Minutes (download ~1 GB over the home link) | Low effort; small **B2 egress $** (~$0.01/GB). Needs key + restic password |
+| **restic → B2 (todo)** | Cross-box **todo store** (`/srv/dev/repos/todo-store.git`) | **Separate** Backblaze B2 bucket (its own scoped key); **runs on the host** | Daily 05:00, keep-within 14d + prune | Tiny — cloud, dedup; a few MB total | Seconds–minutes (small download) | Low effort, negligible egress. Needs `B2_TODO_*` key + restic password |
 
 > **Status (2026-09-13):** vzdump→flash ✅ running. restic→B2 ✅ running (5 snapshots,
 > `restic check` clean). **restic→flash ❌ not yet running** — the timer is enabled but
@@ -21,7 +22,7 @@ they are easy to confuse — this is the map. Two are real backups to the **USB 
 > `sudo systemctl start hs-restic-flash.timer`. Until then the world's flash copy exists
 > **only inside the vzdump VM images**, not as a file-level restic repo.
 
-## The four, in words
+## The five, in words
 
 ### 1. LVM-thin snapshots — rollback points, NOT backups
 Created by hand (the `/add-valheim-mod` skill runs `qm snapshot 100 pre_<change>`) right
@@ -60,13 +61,25 @@ to run if `/mnt/backup` isn't mounted (a backup to a missing mount is a silent n
 > have to be pulled out of the guest first (e.g. a guest-side `tar` to a host-visible path,
 > or run a restic-flash-world backup inside the VM like the B2 one does).
 
-### 4. restic → B2 — the world, offsite (every other day)
-The only offsite copy, and the only copy of the *irreplaceable* thing that isn't on the
+### 4. restic → B2 (world) — the world, offsite (every other day)
+The world's offsite copy, and the only copy of that *irreplaceable* thing that isn't on the
 box. Separate restic repo on a **dedicated, bucket-scoped B2 key** (read+write+delete for
-prune) so the box can touch only `valheim-world`, never Ethan's personal `b2-backup`.
+prune) so the box can touch only `valheim-server`, never Ethan's personal `b2-backup`.
 **Runs inside VM 100** (the world dir is local to the guest) via
 `valheim/backup/valheim-b2-world.{service,timer}` → `backups/restic-b2-world.sh` — **now in
 the valheim-server repo**. Same `--keep-within 14d` + prune + check.
+
+### 5. restic → B2 (todo) — the todo store, offsite (daily)
+The cross-box **todo store**'s only offsite copy. Its tooling lives on GitHub, but the
+captured/classified data in the bare hub (`/srv/dev/repos/todo-store.git`) is
+irreplaceable, and until this existed its only backup was on-box (restic→flash on the
+USB stick). **Runs on the host** (the hub lives here) via
+`systemd/hs-todo-b2.{service,timer}` → `backups/restic-todo-b2.sh`. Uses a **separate,
+dedicated B2 bucket with its own scoped key** (`B2_TODO_*` in `backup.env`), distinct from
+the world key, so a leak of one can't touch the other; shares the restic encryption
+password. Same `--keep-within 14d` + prune + check. **The timer is left disabled until
+`B2_TODO_*` is staged** — the script fails loudly on a missing key rather than backing up
+nowhere, so an unconfigured run is a visible failure, not a silent no-op.
 
 > **On prune and "deltas":** restic snapshots are **not** a full-plus-incrementals chain —
 > each snapshot is a complete, independently-restorable set of references to content-addressed
@@ -97,12 +110,13 @@ password manager, so a total-loss restore is possible.
 ## 3-2-1 scorecard (honest)
 - **Copy 1:** live data on the server.
 - **Copy 2:** the USB stick (vzdump always; restic once its backup is started).
-- **Copy 3 (offsite):** B2 — **world only**.
+- **Copy 3 (offsite):** B2 — the **world** (inside the VM) and the **todo store** (on the
+  host), each in its own bucket-scoped repo.
 
 Host config and the VM image are **not** offsite by design — they're reproducible (repo +
-`bootstrap.sh` + re-pull mods). The only thing that truly can't be regenerated is the
-world, and that's the thing with a third, offsite copy. (LVM snapshots are **not** a copy
-in this tally — same disk, same box.)
+`bootstrap.sh` + re-pull mods). The two things that truly can't be regenerated — the
+Valheim world and the captured todo data — are exactly the two with a third, offsite copy.
+(LVM snapshots are **not** a copy in this tally — same disk, same box.)
 
 ## Test-restore (the step everyone skips)
 Periodically restore the latest vzdump into a *throwaway* VM and boot it, and
