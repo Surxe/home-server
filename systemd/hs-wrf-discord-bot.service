@@ -24,8 +24,9 @@ WorkingDirectory=/srv/dev/repos/WRFrontiersDB-Discord-Bot
 # reloads within DATA_REFRESH_MINUTES of each patch-day push.
 Environment=DATA_DIR=/srv/dev/repos/WRFrontiersDB-Data
 Environment=ENABLED_SERVICES=lookup
-# Server id(s) to sync /wrf to (instant). Empty = global sync (up to an hour to appear).
-Environment=GUILD_IDS=
+# Server id(s) to sync /wrf to (instant), comma-separated: Ethan's personal test server.
+# Empty = global sync (up to an hour to appear).
+Environment=GUILD_IDS=1043978430888300566
 # DISCORD_BOT_TOKEN only (root-owned, chmod 600, created by hand from
 # wrf-discord-bot/wrf-discord-bot.env.example — never committed). systemd reads it as
 # root and injects it into the dev process; dev never reads the file at rest.
