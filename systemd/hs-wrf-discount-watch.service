@@ -1,5 +1,5 @@
 [Unit]
-Description=WRF discount pipeline: scrape latest news, detect + dispatch new discount week
+Description=WRF discount pipeline: scrape latest news, detect + dispatch new discount week, commit archive
 Documentation=https://github.com/Surxe/WRFrontiers-News-Scraper
 After=network-online.target
 Wants=network-online.target
@@ -9,7 +9,7 @@ ConditionPathExists=/srv/dev/repos/WRFrontiers-News-Scraper/scripts/watch_discou
 [Service]
 Type=oneshot
 # Runs as dev, who owns the clone (its data/ state + archive/) and holds the gh
-# auth used to dispatch the visualizer workflow. HOME is set so ~ and gh config
+# auth used to dispatch the visualizer workflow and the git auth used to push archive/. HOME is set so ~ and gh config
 # resolve under systemd, matching the other hs-* dev units.
 User=dev
 Environment=HOME=/home/dev
@@ -21,9 +21,12 @@ WorkingDirectory=/srv/dev/repos/WRFrontiers-News-Scraper
 # thresholds are set, and the prompt handles Relic disambiguation. Ready to run unattended.
 Environment=WRF_DISPATCH=1
 
-# Two steps, run in order:
+# Three steps, run in order:
 #   1. scrape + persist the 3 latest news posts into archive/
 #   2. detect a new discount week from those and (if enabled) dispatch the visualizer
+#   3. commit + push any archive/ changes (new posts, WRF's edits) to the scraper repo,
+#      so its git history records them; no-op when nothing changed or off master
 ExecStart=/usr/bin/python3 /srv/dev/repos/WRFrontiers-News-Scraper/scripts/archive.py --latest 3
 ExecStart=/usr/bin/python3 /srv/dev/repos/WRFrontiers-News-Scraper/scripts/watch_discount.py --latest 3
+ExecStart=/srv/dev/repos/home-server/wrf-discount-watch/commit-archive.sh
 TimeoutStartSec=300

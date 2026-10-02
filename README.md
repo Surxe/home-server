@@ -12,8 +12,9 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   `hs-todo-sync.{service,path}` (push this box's todo commits to the hub on each
   commit — event-driven, the home-server twin of the workstation's todo-sync.path),
   `hs-wrf-discount-watch.{service,timer}` (poll the WRF news feed 4x/day: scrape the
-  latest posts, and on a new weekly discount dispatch the discount-visualizer — see
-  the WRFrontiers-News-Scraper repo; enabled only when that clone is present),
+  latest posts, on a new weekly discount dispatch the discount-visualizer, then commit
+  + push the scraper's `archive/` changes via `wrf-discount-watch/commit-archive.sh` —
+  see the WRFrontiers-News-Scraper repo; enabled only when that clone is present),
   `hs-steam-price-refresh.{service,timer}` (daily Steam price refresh + at/below-threshold
   email alerts — see the `steam-tracker/` area and the steam-price-tracker repo; enabled
   when that clone's venv is built), and `install.sh` (unit installer).
