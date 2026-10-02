@@ -19,6 +19,7 @@ say() { printf '\n\033[1m-- %s\033[0m\n' "$*"; }
 UNITS=(
   home-server-wifi.service
   hs-restic-flash.service   hs-restic-flash.timer
+  hs-todo-b2.service            hs-todo-b2.timer    # todo-store offsite -> B2 (needs B2_TODO_* staged)
   hs-todo-classify.service      hs-todo-classify.timer
   hs-todo-sync.service          hs-todo-sync.path   # push-on-commit -> hub (see todo repo)
   hs-wrf-discount-watch.service hs-wrf-discount-watch.timer  # WRF discount announce watch (see wrf-news-research repo)
@@ -69,8 +70,11 @@ fi
 # hs-wrf-update-probe.timer follows the same split: linked here, ENABLED by
 # wrf-probe/install.sh once it has built the Orchestrator clone's venv.
 # home-server-wifi.service is owned/enabled by bootstrap.sh; not touched here
-# (restarting it would drop the host's uplink). Backup timer reported, not changed:
-for t in hs-restic-flash.timer; do
+# (restarting it would drop the host's uplink). Backup timers reported, not changed:
+# their enable-state is left to the operator so this installer never silently flips
+# backup behaviour. hs-todo-b2 in particular must NOT be enabled until B2_TODO_* is
+# staged in /etc/home-server/backup.env, or every trigger fails on the guard.
+for t in hs-restic-flash.timer hs-todo-b2.timer; do
   echo "  $t: $(systemctl is-enabled "$t" 2>/dev/null || echo 'not-enabled')  (enable with: systemctl enable --now $t)"
 done
 echo "systemd units installed."

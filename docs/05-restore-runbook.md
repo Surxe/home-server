@@ -12,6 +12,7 @@ its correctness is the entire justification for letting Claude "go ham."
 | Valheim guest broken/lost | Restore latest **vzdump** of the guest | minutes |
 | Host config messed up | Re-run **`bootstrap.sh`** (re-links + rewrites config) | minutes |
 | World corrupted, guest fine | `restic restore` the world from **flash or B2** into `/srv/valheim/config` (stop the container first — see below) | minutes |
+| Todo store lost/corrupted | `restic restore` the store from **flash or the `B2_TODO_*` repo** into `/srv/dev/repos/todo-store.git` | minutes |
 | Total loss (new/wiped disk) | Full rebuild below | ~30 min + data restore |
 
 ## Restoring the world into a live guest (don't clobber your own restore)
@@ -70,8 +71,12 @@ manager), the USB stick, and network access.
      `docs/02-valheim-vm.md`, re-stage the pinned mod DLLs from the manifest, then restore
      the **world**:
 8. **Restore the world:** from the stick (vzdump already includes it), or
-   `restic restore` from the **B2 `valheim-world`** repo (the bucket-scoped key
+   `restic restore` from the **B2 `valheim-server`** repo (the bucket-scoped key
    can read it).
+8b. **Restore the todo store:** `restic restore` the bare hub into
+   `/srv/dev/repos/todo-store.git` — from the stick's restic repo, or from the
+   **`B2_TODO_*`** bucket (host-side; needs that scoped key + the restic password).
+   Reproducible only in its *tooling* (on GitHub), not its captured data.
 9. **Re-supply secrets** into Ethan's env/launcher (restic pw, B2 keys) — bootstrap
    prints these as manual follow-ups; it never stores them.
 10. **Verify:** server boots, ModSentry active, crossplay code prints, a test
@@ -81,8 +86,10 @@ manager), the USB stick, and network access.
 
 - The full host image and the Valheim VM image are **reproducible**, not archived
   offsite. If both the disk and the stick are gone simultaneously, you rebuild
-  from the repo (config) + B2 (world) + re-fetched pinned mods. That is by design:
-  the only irreplaceable artifact (the world) is the only one with an offsite copy.
+  from the repo (config) + B2 (world + todo store) + re-fetched pinned mods. That is
+  by design: the two irreplaceable artifacts — the world and the captured todo data —
+  are exactly the two with an offsite copy (`valheim-server` and the `B2_TODO_*`
+  bucket); everything else regenerates from the repo.
 
 ## Keep this honest
 
