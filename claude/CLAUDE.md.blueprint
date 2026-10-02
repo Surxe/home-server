@@ -1,0 +1,68 @@
+<!-- CLAUDE.md.blueprint -->
+<!-- TEMPLATE for the assembled claude/CLAUDE.md (installed as ~/.agents/AGENTS.md). -->
+<!-- Edit THIS file for the box-specific, handwritten prose. Each {{token}} on its own line -->
+<!-- is replaced by dev-env/lib/build-agents-md.sh with sections/<token>.md from this repo's -->
+<!-- claude/sections/, else from dev-env/sections/ (shared). {{repo-descriptions}} is -->
+<!-- regenerated from the repos cloned on this box. Do NOT edit the generated CLAUDE.md. -->
+<!-- claude/install.sh rebuilds it on every install. -->
+# home-server — operating context for AI assistants
+
+This machine is a **headless Proxmox host** (an old laptop): the **home-server**. It
+exists to run **server-like systems** — game servers, background services, anything
+meant to be always-on — **off of Ethan's home PC** and onto dedicated, disposable
+infrastructure. Ethan's workstation itself is documented separately in the
+**`my-system`** repo (config-as-code for his dual-boot desktop); this box follows the
+same "the machine is a scripted rebuild, not a weekend" philosophy for the server side.
+
+- **This repo** (`/srv/dev/repos/home-server`) is the source of truth for the HOST:
+  Proxmox/host config, wifi, host backups, the generic VM-create mechanism, and the
+  cross-box `todo` hub. Config-as-code, symlink / copy into live paths. Secrets never
+  live here — only their locations under `/etc/`.
+- **`valheim-server`** (`/srv/dev/repos/valheim-server`, a sibling clone) owns the whole
+  **Valheim server** subsystem now — its Docker/mod config, VM provisioning, the systemd
+  feeds that watch it, world backups, docs, and its own agent skills + memory. This box's
+  `install.sh` runs valheim-server's installer as a final step. Edit Valheim things there.
+- **`my-system`** can be cloned at `/srv/dev/repos/my-system` as a **read-only
+  reference** for conventions (installer layout, the `install` skill, CLAUDE/memory/skill
+  structure). Do not modify it from here.
+
+## The box, briefly
+- Proxmox host; uplink is **wifi** (`home-server-wifi.service`), internal NAT bridge
+  `vmbr0` for guests. You manage it from **`/home/dev`** as root via `sudo`.
+- Guests run in VMs. **Valheim = VM 100** (its config/tooling lives in the
+  `valheim-server` repo). No SSH into guests — drive them with
+  `sudo qm guest exec 100 -- ...` (QEMU guest agent) → `docker ...` inside.
+- Deep, current per-topic detail lives in **memory** (see the memory index) and in
+  `docs/` (host runbook; the Valheim VM runbook is in the valheim-server repo).
+
+## How work is organized (why this file exists)
+The goal is **small, focused sessions** instead of one giant one. So this file is only
+the top-level orientation; **memory** carries per-subsystem state and **skills** encode
+repeatable procedures (layout in the shared section below). On this box the source for
+this file is `home-server/claude/CLAUDE.md.blueprint`. Notably the
+**`home-server-install`** skill: run it whenever you edit host-repo code that
+`install.sh` deploys. (Valheim work has its own skills — `add-valheim-mod`,
+`restart-valheim`, `valheim-server-install`, … — installed from the valheim-server repo.)
+
+## Working rules (this box)
+- **After editing anything `install.sh` deploys, install it and verify it** — follow the
+  `home-server-install` skill. If you tested it yourself and it passed, Ethan's review is
+  not required; if you couldn't test it, say so and leave it for him.
+- Prefer simple, Debian/Proxmox-native, idempotent solutions; understand before changing.
+- Branch off `main` for changes in this repo.
+
+{{shared}}
+
+{{repo-descriptions}}
+
+## Repo-specific rules (handwritten)
+
+- **`WRFrontiersDB-Parser`: do development in the `WRFrontiersDB-Parser-dev` worktree,
+  never in the main checkout.** `/srv/dev/repos/WRFrontiersDB-Parser` is the checkout
+  the WRF pipeline runs (the Orchestrator resolves the Parser at
+  `<repos_dir>/WRFrontiersDB-Parser`), so it must stay on `main`, clean, and
+  fast-forwardable — an edit or a feature branch there goes straight into the next
+  pipeline run. Do all feature/fix work in `/srv/dev/repos/WRFrontiersDB-Parser-dev` (a
+  `git worktree` of the same repo): branch off `origin/main` there (`main` itself is held
+  by the main checkout), commit, and open PRs from there. Only touch the main checkout to
+  fast-forward it after a merge (e.g. `wrf-pull`).

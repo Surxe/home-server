@@ -22,6 +22,10 @@ Any edit under the home-server repo to code with a deploy step, i.e. anything
 
 - `systemd/*.service` / `*.timer` — symlinked into `/etc/systemd/system`; systemd needs a
   daemon-reload (and often a restart) to pick up changes.
+- `claude/CLAUDE.md.blueprint` (+ `claude/sections/`, and dev-env's shared
+  `sections/shared.md`) — **built** into `claude/CLAUDE.md` by `claude/install.sh` (via
+  `dev-env/lib/build-agents-md.sh`, which also regenerates the cloned-repo list). Edit the
+  blueprint, never the generated `CLAUDE.md`; commit both.
 - `claude/CLAUDE.md`, `claude/skills/**`, `claude/memory/**` — **copied** to `~/.agents`
   (skills symlinked into `~/.claude/skills`; memory symlinked into `~/.claude/projects/-<proj>/memory`
   and rendered to `~/.dsh/memory` for the DeepSeek Harness), so a repo edit does NOT reach
