@@ -51,3 +51,12 @@ elif as_dev test -d "$TODO_STORE_HUB"; then
 else
   say "todo-store: neither clone nor bare present — create the store hub first"
 fi
+
+echo "== todo-store capture guard =="
+# captures.jsonl is single-writer (the workstation mints ids). A `todo add` here once
+# minted ids the workstation also used, wedging the hub sync on a captures conflict.
+# todo.capture=false makes `todo add` refuse on this box; status/classify still work.
+if as_dev test -d "$TODO_STORE_DIR/.git"; then
+  as_dev git -C "$TODO_STORE_DIR" config todo.capture false
+  say "todo add disabled on this box (todo.capture=false)"
+fi
