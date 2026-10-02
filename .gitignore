@@ -13,3 +13,5 @@ valheim/mod-update-history.csv
 .DS_Store
 # Personal working notes / scratch (never committed) — e.g. the WRF-port checklist.
 personal/
+# Repo-description cache for the CLAUDE.md build (regenerable; see dev-env/lib/build-agents-md.sh).
+claude/.cache/

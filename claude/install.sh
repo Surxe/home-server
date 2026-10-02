@@ -9,6 +9,8 @@
 # root, in which case the writes are done AS dev via runuser so nothing in dev's home
 # ends up root-owned). Mirrors the my-system users/dev-* installer pattern.
 #
+#   claude/CLAUDE.md.blueprint (+ sections/, dev-env/sections/, the cloned-repo list)
+#                           -> claude/CLAUDE.md, built by dev-env/lib/build-agents-md.sh
 #   claude/CLAUDE.md        -> ~dev/.agents/AGENTS.md   (symlinked to ~/.claude/CLAUDE.md + ~/.dsh/AGENTS.md)
 #   claude/skills/<name>/   -> ~dev/.agents/skills/<name>/  (symlinked to ~/.claude/skills; dsh reads natively)
 #   claude/memory/<proj>/   -> ~dev/.agents/memory/      (symlinked to ~/.claude/projects/-<proj>/memory)
@@ -61,7 +63,20 @@ ensure_agents_symlink() {   # $1 = target (must exist), $2 = link path
 
 echo "== claude context install (-> $AGENTS_DIR, symlinked into $CLAUDE_DIR) =="
 
-# 1. Global instructions -> neutral AGENTS.md, symlinked to both agents' paths.
+# 1. Global instructions: rebuild CLAUDE.md from the blueprint (this box's handwritten
+#    prose + dev-env's shared section + the repos cloned on this box), then install it
+#    as the neutral AGENTS.md, symlinked to both agents' paths. The built CLAUDE.md is
+#    committed, so if dev-env's builder is missing or fails we install the last build.
+BUILDER="$DEV_ENV_REPO/lib/build-agents-md.sh"
+if [ -f "$HERE/CLAUDE.md.blueprint" ]; then
+  if [ -x "$BUILDER" ]; then
+    as_dev "$BUILDER" --blueprint "$HERE/CLAUDE.md.blueprint" --sections "$HERE/sections" \
+      --out "$HERE/CLAUDE.md" --cache "$HERE/.cache" | sed 's/^/  /' || \
+      say "!! CLAUDE.md build failed (see above) — installing the last built CLAUDE.md"
+  else
+    say "!! no $BUILDER — installing the last built CLAUDE.md"
+  fi
+fi
 if [ -f "$HERE/CLAUDE.md" ]; then
   as_dev install -D -m 0644 "$HERE/CLAUDE.md" "$AGENTS_DIR/AGENTS.md"
   say "AGENTS.md -> $AGENTS_DIR/AGENTS.md"
