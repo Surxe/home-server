@@ -27,6 +27,7 @@ Do this by default:
 - **valheim-server** — `/srv/dev/repos/valheim-server` (`Surxe/valheim-server`) — (no description set)
 - **WRF-Compat-Tools** — `/srv/dev/repos/WRF-Compat-Tools` (`OwendB1/WRF-Compat-Tools`) — A repository with tools and research + a customized Proton 10 runtime for War Robots: Frontiers to run under Linux.
 - **WRFrontiersDB-Data** — `/srv/dev/repos/WRFrontiersDB-Data` (`Surxe/WRFrontiersDB-Data`) — War Robots Frontiers Database Data Archive
+- **WRFrontiersDB-Discord-Bot** — `/srv/dev/repos/WRFrontiersDB-Discord-Bot` (`Surxe/WRFrontiersDB-Discord-Bot`) — (no description set)
 - **WRFrontiersDB-Orchestrator** — `/srv/dev/repos/WRFrontiersDB-Orchestrator` (`Surxe/WRFrontiersDB-Orchestrator`) — Orchestrates the entire War Robots Frontiers data ecosystem — chaining the Exporter, Parser, Data, Site, and shared Design repos into a one-command, reproducible patch-day pipeline feeding multiple front-ends (Site + Discount Visualizer).
 - **WRFrontiersDB-Parser** — `/srv/dev/repos/WRFrontiersDB-Parser` (`Surxe/WRFrontiersDB-Parser`) — War Robots Frontiers Database Parser
 - **WRFrontiersDB-Parser-dev** — `/srv/dev/repos/WRFrontiersDB-Parser-dev` (git worktree of `WRFrontiersDB-Parser`) (`Surxe/WRFrontiersDB-Parser`) — War Robots Frontiers Database Parser

@@ -25,6 +25,7 @@ UNITS=(
   hs-wrf-discount-watch.service hs-wrf-discount-watch.timer  # WRF discount announce watch (see wrf-news-research repo)
   hs-steam-price-refresh.service hs-steam-price-refresh.timer  # daily Steam price refresh (see steam-price-tracker repo)
   hs-wrf-update-probe.service   hs-wrf-update-probe.timer  # WRF patch probe (enabled by wrf-probe/install.sh; see WRFrontiersDB-Orchestrator repo)
+  hs-wrf-discord-bot.service    # WRF [[name]] Discord bot (enabled by wrf-discord-bot/install.sh once its token is staged)
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) The backup timer's enable-state is left
@@ -69,6 +70,8 @@ fi
 # avoids a first-run ordering gap, since this installer runs before the venv exists.
 # hs-wrf-update-probe.timer follows the same split: linked here, ENABLED by
 # wrf-probe/install.sh once it has built the Orchestrator clone's venv.
+# hs-wrf-discord-bot.service too: linked here, ENABLED + restarted by
+# wrf-discord-bot/install.sh after its venv build, and only once the token is staged.
 # home-server-wifi.service is owned/enabled by bootstrap.sh; not touched here
 # (restarting it would drop the host's uplink). Backup timers reported, not changed:
 # their enable-state is left to the operator so this installer never silently flips

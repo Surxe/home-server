@@ -16,13 +16,21 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   the WRFrontiers-News-Scraper repo; enabled only when that clone is present),
   `hs-steam-price-refresh.{service,timer}` (daily Steam price refresh + at/below-threshold
   email alerts — see the `steam-tracker/` area and the steam-price-tracker repo; enabled
-  when that clone's venv is built), and `install.sh` (unit installer).
+  when that clone's venv is built), `hs-wrf-discord-bot.service` (the long-running
+  WRFrontiersDB Discord bot — see the `wrf-discord-bot/` area), and `install.sh` (unit
+  installer).
 - `steam-tracker/` — the Steam price-tracker subsystem's box-local config: the
   config-as-code tracked-app list (`tracked_apps.json`, edited via the `add-steam-app`
   skill), the SMTP secret template (`steam-tracker.env.example` → live
   `/etc/home-server/steam-tracker.env`, root 600), and `install.sh` (builds the generic
   `steam-price-tracker` clone's venv + arms the daily timer). The tracker *code* is the
   generic sibling clone `/srv/dev/repos/steam-price-tracker`.
+- `wrf-discord-bot/` — the WRFrontiersDB Discord bot's box-local config: the token
+  template (`wrf-discord-bot.env.example` → live `/etc/home-server/wrf-discord-bot.env`,
+  root 600) and `install.sh` (builds the bot clone's venv; enables + restarts the bot once
+  the token is staged). The bot's options (`DATA_DIR`, `GUILD_IDS`, ...) are in its unit;
+  it reads the pipeline's `WRFrontiersDB-Data` clone. The bot *code* is the generic
+  sibling clone `/srv/dev/repos/WRFrontiersDB-Discord-Bot`.
 - `todo/` — this box is the hub + classifier for the shared cross-box `todo` store
   (bare repo `/srv/dev/repos/todo.git` + working clone). `classify-drain.sh` runs the
   classify job (pull hub, classify, push meta). Push-back to the workstation is not
