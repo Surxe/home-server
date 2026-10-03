@@ -1,29 +1,37 @@
 [Unit]
 Description=WRF discount pipeline: scrape latest news, detect + dispatch new discount week
+Documentation=https://github.com/Surxe/WRFrontiersDB-Orchestrator
 Documentation=https://github.com/Surxe/WRFrontiers-News-Scraper
 After=network-online.target
 Wants=network-online.target
-# The pipeline and its state/archive live in the WRFrontiers-News-Scraper clone.
+# The Orchestrator's discount run (src/discount.py) drives the News-Scraper's
+# pipeline, whose scripts and state/archive live in the News-Scraper clone.
+ConditionPathExists=/srv/dev/repos/WRFrontiersDB-Orchestrator/src/discount.py
 ConditionPathExists=/srv/dev/repos/WRFrontiers-News-Scraper/scripts/watch_discount.py
+# Run logs go on the WRF data volume, next to the patch-day logs.
+RequiresMountsFor=/srv/dev/wrf
 
 [Service]
 Type=oneshot
-# Runs as dev, who owns the clone (its data/ state + archive/) and holds the gh
-# auth used to dispatch the visualizer workflow. HOME is set so ~ and gh config
-# resolve under systemd, matching the other hs-* dev units.
+# Runs as dev, who owns both clones (the scraper's data/ state + archive/) and
+# holds the gh auth used to dispatch the visualizer workflow. HOME is set so ~
+# and gh config resolve under systemd, matching the other hs-* dev units.
 User=dev
 Environment=HOME=/home/dev
-# Run from the clone so the scripts' relative defaults (archive/, data/) resolve
-# inside it. Without this, archive.py --out's default `archive` is created against
-# systemd's CWD (/), which dev can't write -> PermissionError before step 2 runs.
-WorkingDirectory=/srv/dev/repos/WRFrontiers-News-Scraper
+WorkingDirectory=/srv/dev/repos/WRFrontiersDB-Orchestrator
 # Dispatch is ON: the Jev mapping system is calibrated (accept threshold 0.7),
 # thresholds are set, and the prompt handles Relic disambiguation. Ready to run unattended.
 Environment=WRF_DISPATCH=1
 
-# Two steps, run in order:
-#   1. scrape + persist the 3 latest news posts into archive/
-#   2. detect a new discount week from those and (if enabled) dispatch the visualizer
-ExecStart=/usr/bin/python3 /srv/dev/repos/WRFrontiers-News-Scraper/scripts/archive.py --latest 3
-ExecStart=/usr/bin/python3 /srv/dev/repos/WRFrontiers-News-Scraper/scripts/watch_discount.py --latest 3
+# Run-report email: the same SMTP_USER / SMTP_PASSWORD / EMAIL_TO the patch-day
+# run (wrf-orchestrator@.service) uses, from the same root-only file. The
+# orchestrator withholds every secret in it from the scraper's child processes.
+# "-": a missing file isn't fatal; the run still polls, the email just stays off.
+EnvironmentFile=-/etc/home-server/wrf-orchestrator.env
+
+# One run, three logged steps: preflight, scrape the 3 latest news posts into the
+# scraper's archive/, then detect a new discount week and dispatch the visualizer.
+# Emails the run report (logs attached) only on a new week or a failure; a quiet
+# poll sends nothing and removes its own run dir (its output stays in the journal).
+ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/discount.py --latest 3 --log-dir /srv/dev/wrf/discount-logs
 TimeoutStartSec=300
