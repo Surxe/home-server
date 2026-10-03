@@ -29,9 +29,13 @@ Environment=WRF_DISPATCH=1
 # "-": a missing file isn't fatal; the run still polls, the email just stays off.
 EnvironmentFile=-/etc/home-server/wrf-orchestrator.env
 
-# One run, three logged steps: preflight, scrape the 3 latest news posts into the
-# scraper's archive/, then detect a new discount week and dispatch the visualizer.
-# Emails the run report (logs attached) only on a new week or a failure; a quiet
-# poll sends nothing and removes its own run dir (its output stays in the journal).
-ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/discount.py --latest 3 --log-dir /srv/dev/wrf/discount-logs
-TimeoutStartSec=300
+# One run, four logged steps: preflight, scrape the 3 latest news posts into the
+# scraper's archive/, detect a new discount week and dispatch the visualizer, then
+# follow that GitHub Actions run to its end (gh, as dev). Emails the run report
+# (logs attached, visualizer result included) only on a new week or a failure; a
+# quiet poll sends nothing and removes its own run dir (its output stays in the
+# journal).
+ExecStart=/srv/dev/repos/WRFrontiersDB-Orchestrator/.venv/bin/python src/discount.py --latest 3 --log-dir /srv/dev/wrf/discount-logs --visualizer-timeout 1800
+# A quiet poll takes seconds; a dispatch waits on the visualizer run (usually
+# 2-5 min, capped at 30 by --visualizer-timeout), so leave room past that cap.
+TimeoutStartSec=2400
