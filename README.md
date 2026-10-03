@@ -13,7 +13,8 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   commit — event-driven, the home-server twin of the workstation's todo-sync.path),
   `hs-wrf-discount-watch.{service,timer}` (poll the WRF news feed several times a day
   via the WRFrontiersDB-Orchestrator's discount run: scrape the latest posts, and on a
-  new weekly discount dispatch the discount-visualizer and email the run report, using
+  new weekly discount dispatch the discount-visualizer, wait for its Actions run, and
+  email the run report with that run's result, using
   the patch-day run's SMTP creds in `/etc/home-server/wrf-orchestrator.env` — see the
   Orchestrator and WRFrontiers-News-Scraper repos; enabled only when that clone is present),
   `hs-steam-price-refresh.{service,timer}` (daily Steam price refresh + at/below-threshold
