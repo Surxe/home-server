@@ -11,9 +11,11 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   `hs-todo-classify.{service,timer}` (daily 13:00 CT todo classify + hub sync),
   `hs-todo-sync.{service,path}` (push this box's todo commits to the hub on each
   commit — event-driven, the home-server twin of the workstation's todo-sync.path),
-  `hs-wrf-discount-watch.{service,timer}` (poll the WRF news feed 4x/day: scrape the
-  latest posts, and on a new weekly discount dispatch the discount-visualizer — see
-  the WRFrontiers-News-Scraper repo; enabled only when that clone is present),
+  `hs-wrf-discount-watch.{service,timer}` (poll the WRF news feed several times a day
+  via the WRFrontiersDB-Orchestrator's discount run: scrape the latest posts, and on a
+  new weekly discount dispatch the discount-visualizer and email the run report, using
+  the patch-day run's SMTP creds in `/etc/home-server/wrf-orchestrator.env` — see the
+  Orchestrator and WRFrontiers-News-Scraper repos; enabled only when that clone is present),
   `hs-steam-price-refresh.{service,timer}` (daily Steam price refresh + at/below-threshold
   email alerts — see the `steam-tracker/` area and the steam-price-tracker repo; enabled
   when that clone's venv is built), `hs-wrf-discord-bot.service` (the long-running
