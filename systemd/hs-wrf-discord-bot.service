@@ -23,11 +23,14 @@ WorkingDirectory=/srv/dev/repos/WRFrontiersDB-Discord-Bot
 # DATA_DIR is the pipeline's WRFrontiersDB-Data clone: the bot only reads it, and
 # reloads within DATA_REFRESH_MINUTES of each patch-day push.
 Environment=DATA_DIR=/srv/dev/repos/WRFrontiersDB-Data
-# The pipeline records each successful Site deploy here; the bot re-fetches the Site's
-# meta descriptions (its embed text) once per new deploy.
+# The pipeline records each successful Site deploy here (its deploy record: run_id,
+# data_commit, ...); the bot re-fetches the Site's meta descriptions (its embed text)
+# once per new deploy.
 Environment=SITE_DEPLOY_STATE=/srv/dev/repos/WRFrontiersDB-Orchestrator/data/site_deploy_state.json
-Environment=ENABLED_SERVICES=lookup
-# Server id(s) to sync /wrf to (instant), comma-separated: Ethan's personal test server.
+# lookup = [[name]] + /wrf; about = /about (which Data commit the bot, Site and
+# Visualizer are on; reads their /deploy.json, VISUALIZER_URL defaults in the bot).
+Environment=ENABLED_SERVICES=lookup,about
+# Server id(s) to sync the slash commands to (instant), comma-separated: Ethan's personal test server.
 # Empty = global sync (up to an hour to appear).
 Environment=GUILD_IDS=1043978430888300566
 # DISCORD_BOT_TOKEN only (root-owned, chmod 600, created by hand from
@@ -40,7 +43,8 @@ RestartSec=30
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=wrf-discord-bot
-# The bot only reads files and talks to Discord + wrf-db.info; it writes nothing.
+# The bot only reads files (and git in DATA_DIR) and talks to Discord + the frontends;
+# it writes nothing.
 NoNewPrivileges=yes
 ProtectSystem=strict
 PrivateTmp=yes
