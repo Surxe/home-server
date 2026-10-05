@@ -7,7 +7,8 @@ metadata:
 
 The **WRFrontiersDB Discord bot** (code: sibling clone `/srv/dev/repos/WRFrontiersDB-Discord-Bot`,
 see its `CLAUDE.md`) runs **on the host**, not in a VM, as `hs-wrf-discord-bot.service` (user
-`dev`, long-running). It answers `[[name]]` and `/wrf` in Ethan's personal test server.
+`dev`, long-running). It answers `[[name]]`, `/wrf` and `/about` (which Data commit the
+bot, Site and Visualizer are on) in Ethan's personal test server.
 
 - **Config-as-code:** the options (`DATA_DIR`, `GUILD_IDS`, `ENABLED_SERVICES`) are in
   `systemd/hs-wrf-discord-bot.service`. Only the token is outside the repo:
@@ -18,8 +19,9 @@ see its `CLAUDE.md`) runs **on the host**, not in a VM, as `hs-wrf-discord-bot.s
 - **Embed text:** the Site's English page meta descriptions, from `wrf-db.info/meta_descriptions.json`.
   Fetched at startup and again within 10 min of each Site deploy the pipeline records in
   `SITE_DEPLOY_STATE` (`WRFrontiersDB-Orchestrator/data/site_deploy_state.json`). Stale embed text?
-  Check that file's `site_run_id` against the JSON's `build_id`; the bot logs "The Site still
-  serves meta descriptions from build ..." while they differ.
+  Check that file's `run_id` against the JSON's `build_id`; the bot logs "The Site still
+  serves meta descriptions from build ..." while they differ. The file is the Site's deploy
+  record (see [[wrf-deployed]]), so it also gives the Site's `data_commit`.
 - **Deploy a change** (bot code or unit): `sudo wrf-discord-bot/install.sh` rebuilds the venv,
   clears any start-limit failure and restarts. **Verify:**
   `journalctl -u hs-wrf-discord-bot -n 20` shows `Logged in as wrf-db#1514`.
