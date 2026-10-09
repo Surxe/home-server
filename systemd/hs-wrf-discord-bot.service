@@ -32,9 +32,10 @@ Environment=SITE_DEPLOY_STATE=/srv/dev/repos/WRFrontiersDB-Orchestrator/data/sit
 # builds = replies to wrf-db.info /models build-code links with the builds' parts
 # (decoded with the DATA_DIR clone's codec).
 Environment=ENABLED_SERVICES=lookup,about,builds
-# Server id(s) to sync the slash commands to (instant), comma-separated: Ethan's personal test server.
-# Empty = global sync (up to an hour to appear).
-Environment=GUILD_IDS=1043978430888300566
+# Server id(s) to sync the slash commands to (instant), comma-separated: Ethan's personal test
+# server, then a second server the bot is in. A server not listed gets no slash commands
+# (message replies still work). Empty = global sync (up to an hour to appear).
+Environment=GUILD_IDS=1043978430888300566,343806367783714816
 # DISCORD_BOT_TOKEN only (root-owned, chmod 600, created by hand from
 # wrf-discord-bot/wrf-discord-bot.env.example — never committed). systemd reads it as
 # root and injects it into the dev process; dev never reads the file at rest.
