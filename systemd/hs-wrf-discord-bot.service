@@ -28,8 +28,10 @@ Environment=DATA_DIR=/srv/dev/repos/WRFrontiersDB-Data
 # once per new deploy.
 Environment=SITE_DEPLOY_STATE=/srv/dev/repos/WRFrontiersDB-Orchestrator/data/site_deploy_state.json
 # lookup = [[name]] + /wrf; about = /about (which Data commit the bot, Site and
-# Visualizer are on; reads their /deploy.json, VISUALIZER_URL defaults in the bot).
-Environment=ENABLED_SERVICES=lookup,about
+# Visualizer are on; reads their /deploy.json, VISUALIZER_URL defaults in the bot);
+# builds = replies to wrf-db.info /models build-code links with the builds' parts
+# (decoded with the DATA_DIR clone's codec).
+Environment=ENABLED_SERVICES=lookup,about,builds
 # Server id(s) to sync the slash commands to (instant), comma-separated: Ethan's personal test server.
 # Empty = global sync (up to an hour to appear).
 Environment=GUILD_IDS=1043978430888300566
