@@ -8,7 +8,8 @@ metadata:
 The **WRFrontiersDB Discord bot** (code: sibling clone `/srv/dev/repos/WRFrontiersDB-Discord-Bot`,
 see its `CLAUDE.md`) runs **on the host**, not in a VM, as `hs-wrf-discord-bot.service` (user
 `dev`, long-running). It answers `[[name]]`, `/wrf` and `/about` (which Data commit the
-bot, Site and Visualizer are on) in Ethan's personal test server.
+bot, Site and Visualizer are on), and replies to wrf-db.info `/models?a=<code>` links with the
+builds' parts, in Ethan's personal test server.
 
 - **Config-as-code:** the options (`DATA_DIR`, `GUILD_IDS`, `ENABLED_SERVICES`) are in
   `systemd/hs-wrf-discord-bot.service`. Only the token is outside the repo:
