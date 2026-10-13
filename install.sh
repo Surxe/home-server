@@ -28,6 +28,33 @@ WARNINGS=()
 FAILED=()
 warn(){ echo "!! $*" >&2; WARNINGS+=("$*"); }
 
+# current_branch / checkout_label / on_default_branch come from the shared dev-env lib
+# (also used by my-system's installers): install.sh deploys whatever is CHECKED OUT —
+# that is how a change is tested before it merges — so the refresh steps below
+# (self-sync, the dev-env and valheim-server pulls) apply only on a clone's default
+# branch. If the dev-env clone is missing or predates the lib, fall back to "always the
+# default branch" — i.e. always refresh, which also brings the lib in.
+if [ -f "$REPO/../dev-env/lib/source-checkout.sh" ]; then
+  # shellcheck source=/dev/null
+  source "$REPO/../dev-env/lib/source-checkout.sh"
+else
+  current_branch(){ :; }
+  checkout_label(){ echo "unknown checkout"; }
+  on_default_branch(){ return 0; }
+fi
+# refresh_clone: pull a sibling clone (as dev, to keep it dev-owned) when it is on its
+# default branch; otherwise leave it alone and say which checkout is being deployed.
+refresh_clone(){   # $1 = repo root, $2 = label
+  [ -e "$1/.git" ] || return 0
+  if ! on_default_branch "$1"; then
+    echo ">> $2 is on '$(checkout_label "$1")', not its default branch — deploying the active checkout as-is"
+  elif runuser -u dev -- git -C "$1" pull --ff-only; then
+    echo ">> $2 clone updated"
+  else
+    warn "$2 clone update failed — continuing with existing checkout"
+  fi
+}
+
 # --- self-sync: fast-forward THIS home-server repo to origin before deploying, so a
 #     run always ships the latest committed host config rather than a stale checkout
 #     (the shared dev-env + valheim-server clones get the same refresh further down).
@@ -38,8 +65,9 @@ warn(){ echo "!! $*" >&2; WARNINGS+=("$*"); }
 #     repo being updated, a fast-forward that moves HEAD is followed by an exec of the
 #     refreshed install.sh so the rest of the run uses the new tree; HS_SELF_SYNCED
 #     guards against an exec loop. Runs before logging so the aborted first pass leaves
-#     no stray log — the re-exec'd run writes the real one.
-if [ -z "${HS_SELF_SYNCED:-}" ] && [ -d "$REPO/.git" ]; then
+#     no stray log — the re-exec'd run writes the real one. Skipped entirely off the
+#     default branch (see on_default_branch): a branch under test deploys as checked out.
+if [ -z "${HS_SELF_SYNCED:-}" ] && [ -e "$REPO/.git" ] && on_default_branch "$REPO"; then
   runuser -u dev -- git -C "$REPO" fetch -q origin 2>/dev/null || true
   hs_base="$(runuser -u dev -- git -C "$REPO" rev-parse --abbrev-ref --symbolic-full-name '@{u}' 2>/dev/null || true)"
   if [ -n "$hs_base" ]; then
@@ -78,23 +106,11 @@ echo "== home-server install =="
 # Refresh the shared dev-env clone first so this box deploys the latest shared
 # layer (a stale clone silently ships old fragments — e.g. missing the ds/key
 # export). Pull as dev to keep the clone dev-owned; warn and continue on error.
-if [ -d "$REPO/../dev-env/.git" ]; then
-  if runuser -u dev -- git -C "$REPO/../dev-env" pull --ff-only; then
-    echo ">> dev-env clone updated"
-  else
-    warn "dev-env clone update failed — continuing with existing checkout"
-  fi
-fi
+refresh_clone "$REPO/../dev-env" dev-env
 
 # Refresh the sibling valheim-server clone too (the Valheim subsystem lives there now).
 # Same warn-and-continue as dev-env: a missing/behind clone must not abort the host install.
-if [ -d "$REPO/../valheim-server/.git" ]; then
-  if runuser -u dev -- git -C "$REPO/../valheim-server" pull --ff-only; then
-    echo ">> valheim-server clone updated"
-  else
-    warn "valheim-server clone update failed — continuing with existing checkout"
-  fi
-fi
+refresh_clone "$REPO/../valheim-server" valheim-server
 
 # Installers to run, in order. Add more here as subsystems get their own installer.
 INSTALLERS=(
