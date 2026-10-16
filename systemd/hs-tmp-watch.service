@@ -4,9 +4,8 @@ Documentation=file:///srv/dev/repos/home-server/host/hs-tmp-watch.sh
 
 [Service]
 Type=oneshot
-# Root: du must read every user's /tmp entries (e.g. /tmp/claude-1000 is dev-only),
-# and the re-nag state lives in /var/lib/hs-tmp-watch.
-# Threshold knobs (defaults in the script): TMP_WATCH_PCT=50, TMP_WATCH_RENAG_HOURS=24.
+# Root: du must read every user's /tmp entries (e.g. /tmp/claude-1000 is dev-only).
+# Threshold (default in the script): TMP_WATCH_PCT=50.
 #Environment=TMP_WATCH_PCT=50
 # SMTP credentials + recipient (root 600, from host/host-alerts.env.example — never
 # committed). Leading '-' => a missing file is not a unit error by itself; the script

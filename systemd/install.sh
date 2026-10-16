@@ -4,9 +4,8 @@
 # Idempotent; run as root. Called by ../install.sh. Secrets are NOT installed here.
 #
 # Scope: the HOST units only — wifi, host backups (flash restic), the todo hub, and
-# host watchdogs (hs-tmp-watch). The
-# Valheim units (mod checks, Discord feeds, guest vzdump) moved to the valheim-server repo
-# and are installed by /srv/dev/repos/valheim-server/systemd/install.sh (run by
+# host watchdogs (hs-tmp-watch). The Valheim units (mod checks, Discord feeds, guest
+# vzdump) moved to the valheim-server repo and are installed by /srv/dev/repos/valheim-server/systemd/install.sh (run by
 # ../install.sh as a final step, or standalone).
 set -euo pipefail
 
@@ -27,7 +26,7 @@ UNITS=(
   hs-steam-price-refresh.service hs-steam-price-refresh.timer  # daily Steam price refresh (see steam-price-tracker repo)
   hs-wrf-update-probe.service   hs-wrf-update-probe.timer  # WRF patch probe (enabled by wrf-probe/install.sh; see WRFrontiersDB-Orchestrator repo)
   hs-wrf-discord-bot.service    # WRF [[name]] Discord bot (enabled by wrf-discord-bot/install.sh once its token is staged)
-  hs-tmp-watch.service          hs-tmp-watch.timer  # email when /tmp (tmpfs -> RAM/swap) grows too large
+  hs-tmp-watch.service          hs-tmp-watch.timer  # twice-weekly: email when /tmp (tmpfs -> RAM/swap) grows too large
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) The backup timer's enable-state is left

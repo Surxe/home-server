@@ -13,13 +13,12 @@
 # via EnvironmentFile, so they arrive here as env vars:
 #   SMTP_HOST SMTP_PORT SMTP_USER SMTP_PASS MAIL_FROM MAIL_TO
 #
-# Re-nag policy: one email when /tmp crosses the threshold, then at most one per
-# TMP_WATCH_RENAG_HOURS while it stays above; dropping back below resets it. State
-# lives outside the repo in /var/lib/hs-tmp-watch/.
+# The timer runs it twice a week; each run that finds /tmp over the threshold emails
+# once. No de-dupe state: at that cadence a repeat email is the reminder.
 #
 # Usage:
-#   host/hs-tmp-watch.sh           # check; email if over threshold (and not recently)
-#   host/hs-tmp-watch.sh --force   # email now regardless of threshold/state (test send)
+#   host/hs-tmp-watch.sh           # check; email if over threshold
+#   host/hs-tmp-watch.sh --force   # email now regardless of threshold (test send)
 #   host/hs-tmp-watch.sh --dry-run # print the email instead of sending it
 #
 # Exit: 0 = ok (emailed or nothing to do); 1 = wanted to email but SMTP unconfigured
@@ -28,8 +27,6 @@ set -euo pipefail
 
 : "${TMP_WATCH_PATH:=/tmp}"
 : "${TMP_WATCH_PCT:=50}"            # alert when used >= this % of the tmpfs size
-: "${TMP_WATCH_RENAG_HOURS:=24}"
-: "${TMP_WATCH_STATE_DIR:=/var/lib/hs-tmp-watch}"
 : "${SMTP_HOST:=smtp.gmail.com}" "${SMTP_PORT:=587}"
 export TMP_WATCH_PATH TMP_WATCH_PCT SMTP_HOST SMTP_PORT
 
@@ -43,19 +40,10 @@ for a in "$@"; do
 done
 
 read -r SIZE USED PCT < <(df -P -B1 "$TMP_WATCH_PATH" | awk 'NR==2 {gsub("%","",$5); print $2, $3, $5}')
-STAMP="$TMP_WATCH_STATE_DIR/last-alert"
-mkdir -p "$TMP_WATCH_STATE_DIR"
 
-if [ "$FORCE" -eq 0 ]; then
-  if [ "$PCT" -lt "$TMP_WATCH_PCT" ]; then
-    rm -f "$STAMP"
-    echo "tmp-watch: $TMP_WATCH_PATH at ${PCT}% (< ${TMP_WATCH_PCT}%) — ok"
-    exit 0
-  fi
-  if [ -f "$STAMP" ] && [ -n "$(find "$STAMP" -mmin -$((TMP_WATCH_RENAG_HOURS * 60)))" ]; then
-    echo "tmp-watch: $TMP_WATCH_PATH at ${PCT}% — already alerted within ${TMP_WATCH_RENAG_HOURS}h, not re-sending"
-    exit 0
-  fi
+if [ "$FORCE" -eq 0 ] && [ "$PCT" -lt "$TMP_WATCH_PCT" ]; then
+  echo "tmp-watch: $TMP_WATCH_PATH at ${PCT}% (< ${TMP_WATCH_PCT}%) — ok"
+  exit 0
 fi
 
 # Report inputs, handed to python via env. awk NR<=N (not head) caps the lists: head
@@ -124,7 +112,3 @@ except (smtplib.SMTPException, OSError) as exc:
     sys.exit(1)
 print("tmp-watch: emailed MAIL_TO — %s at %s%%" % (path, pct))
 PY
-
-# Only a real (non-forced, non-dry) alert arms the re-nag window.
-[ "$FORCE" -eq 0 ] && [ "$DRY" -eq 0 ] && touch "$STAMP"
-exit 0
