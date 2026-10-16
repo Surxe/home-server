@@ -5,8 +5,9 @@
 #
 # Scope: the HOST units only — wifi, host backups (flash restic), the todo hub, and
 # host watchdogs (hs-tmp-watch). The Valheim units (mod checks, Discord feeds, guest
-# vzdump) moved to the valheim-server repo and are installed by /srv/dev/repos/valheim-server/systemd/install.sh (run by
-# ../install.sh as a final step, or standalone).
+# vzdump) moved to the valheim-server repo and are installed by
+# /srv/dev/repos/valheim-server/systemd/install.sh (run by ../install.sh as a final
+# step, or standalone).
 set -euo pipefail
 
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
