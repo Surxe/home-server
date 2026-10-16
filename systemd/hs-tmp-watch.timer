@@ -1,0 +1,11 @@
+[Unit]
+Description=Hourly /tmp size check (hs-tmp-watch)
+
+[Timer]
+# Hourly is plenty: /tmp fills over sessions, not seconds, and the script de-dupes
+# alerts to one per TMP_WATCH_RENAG_HOURS while it stays over the threshold.
+OnBootSec=10min
+OnUnitActiveSec=1h
+
+[Install]
+WantedBy=timers.target
