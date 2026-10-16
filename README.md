@@ -20,8 +20,10 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   `hs-steam-price-refresh.{service,timer}` (daily Steam price refresh + at/below-threshold
   email alerts — see the `steam-tracker/` area and the steam-price-tracker repo; enabled
   when that clone's venv is built), `hs-wrf-discord-bot.service` (the long-running
-  WRFrontiersDB Discord bot — see the `wrf-discord-bot/` area), and `install.sh` (unit
-  installer).
+  WRFrontiersDB Discord bot — see the `wrf-discord-bot/` area), `hs-tmp-watch.{service,timer}`
+  (Mon + Thu: email when the `/tmp` tmpfs passes 50% — it is RAM/swap-backed, so it
+  competes with the VM; runs `host/hs-tmp-watch.sh`, SMTP creds in `/etc/home-server/host-alerts.env`
+  from `host/host-alerts.env.example`), and `install.sh` (unit installer).
 - `steam-tracker/` — the Steam price-tracker subsystem's box-local config: the
   config-as-code tracked-app list (`tracked_apps.json`, edited via the `add-steam-app`
   skill), the SMTP secret template (`steam-tracker.env.example` → live

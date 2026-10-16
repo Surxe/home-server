@@ -1,0 +1,12 @@
+[Unit]
+Description=Twice-weekly /tmp size check (hs-tmp-watch)
+
+[Timer]
+# Twice a week (Mon + Thu morning). /tmp fills over many sessions, not hours, so this
+# is enough to catch a build-up without nagging; each over-threshold check emails once.
+OnCalendar=Mon,Thu *-*-* 09:00:00 America/Chicago
+# Catch up after downtime (box may have been off at the scheduled slot).
+Persistent=true
+
+[Install]
+WantedBy=timers.target
