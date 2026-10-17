@@ -66,23 +66,17 @@ echo "== claude context install (-> $AGENTS_DIR, symlinked into $CLAUDE_DIR) =="
 # 1. Global instructions: rebuild CLAUDE.md from the blueprint (this box's handwritten
 #    prose + dev-env's shared section + the repos cloned on this box), then install it
 #    as the neutral AGENTS.md, symlinked to both agents' paths. The built CLAUDE.md is
-#    committed, so if dev-env's builder is missing or fails we install the last build.
+#    generated and gitignored; a missing dev-env builder or a failed build is a hard error.
 BUILDER="$DEV_ENV_REPO/lib/build-agents-md.sh"
-if [ -f "$HERE/CLAUDE.md.blueprint" ]; then
-  if [ -x "$BUILDER" ]; then
-    as_dev "$BUILDER" --blueprint "$HERE/CLAUDE.md.blueprint" --sections "$HERE/sections" \
-      --out "$HERE/CLAUDE.md" --cache "$HERE/.cache" | sed 's/^/  /' || \
-      say "!! CLAUDE.md build failed (see above) — installing the last built CLAUDE.md"
-  else
-    say "!! no $BUILDER — installing the last built CLAUDE.md"
-  fi
-fi
-if [ -f "$HERE/CLAUDE.md" ]; then
-  as_dev install -D -m 0644 "$HERE/CLAUDE.md" "$AGENTS_DIR/AGENTS.md"
-  say "AGENTS.md -> $AGENTS_DIR/AGENTS.md"
-  ensure_agents_symlink "$AGENTS_DIR/AGENTS.md" "$CLAUDE_DIR/CLAUDE.md"
-  ensure_agents_symlink "$AGENTS_DIR/AGENTS.md" "$DSH_HOME_DIR/AGENTS.md"
-fi
+[ -x "$BUILDER" ] || { say "error: no $BUILDER (clone dev-env beside home-server)" >&2; exit 1; }
+[ -f "$HERE/CLAUDE.md.blueprint" ] || { say "error: no $HERE/CLAUDE.md.blueprint" >&2; exit 1; }
+as_dev "$BUILDER" --blueprint "$HERE/CLAUDE.md.blueprint" --sections "$HERE/sections" \
+  --out "$HERE/CLAUDE.md" --cache "$HERE/.cache" | sed 's/^/  /' \
+  || { say "error: CLAUDE.md build failed (see above)" >&2; exit 1; }
+as_dev install -D -m 0644 "$HERE/CLAUDE.md" "$AGENTS_DIR/AGENTS.md"
+say "AGENTS.md -> $AGENTS_DIR/AGENTS.md"
+ensure_agents_symlink "$AGENTS_DIR/AGENTS.md" "$CLAUDE_DIR/CLAUDE.md"
+ensure_agents_symlink "$AGENTS_DIR/AGENTS.md" "$DSH_HOME_DIR/AGENTS.md"
 
 # 2. Skills -> neutral skills dir (dsh reads ~/.agents/skills natively).
 if [ -d "$HERE/skills" ]; then
