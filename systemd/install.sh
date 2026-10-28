@@ -4,7 +4,7 @@
 # Idempotent; run as root. Called by ../install.sh. Secrets are NOT installed here.
 #
 # Scope: the HOST units only — wifi, host backups (flash restic), the todo hub, and
-# host watchdogs (hs-tmp-watch). The Valheim units (mod checks, Discord feeds, guest
+# host watchdogs (hs-tmp-watch, hs-boot-report). The Valheim units (mod checks, Discord feeds, guest
 # vzdump) moved to the valheim-server repo and are installed by
 # /srv/dev/repos/valheim-server/systemd/install.sh (run by ../install.sh as a final
 # step, or standalone).
@@ -28,6 +28,7 @@ UNITS=(
   hs-wrf-update-probe.service   hs-wrf-update-probe.timer  # WRF patch probe (enabled by wrf-probe/install.sh; see WRFrontiersDB-Orchestrator repo)
   hs-wrf-discord-bot.service    # WRF [[name]] Discord bot (enabled by wrf-discord-bot/install.sh once its token is staged)
   hs-tmp-watch.service          hs-tmp-watch.timer  # twice-weekly: email when /tmp (tmpfs -> RAM/swap) grows too large
+  hs-boot-report.service        # every boot: email start time + whether the previous boot ended cleanly
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) The backup timer's enable-state is left
@@ -49,6 +50,11 @@ say "reload + enable timers"
 systemctl daemon-reload
 for t in "${TIMERS[@]}"; do
   systemctl enable --now "$t" && echo "  enabled --now $t"
+done
+# Boot-time oneshot(s): plain `enable` (no --now) so the install itself sends no email;
+# the first report goes out at the next boot.
+for s in hs-boot-report.service; do
+  systemctl enable "$s" && echo "  enabled $s (runs at next boot)"
 done
 # Path watcher(s): `enable --now` on a .path starts watching immediately. The store
 # clone must exist for the watched .git/logs/HEAD to be present; skip cleanly if not.
