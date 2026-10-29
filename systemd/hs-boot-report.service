@@ -1,0 +1,27 @@
+[Unit]
+Description=Email a boot report: host start time + whether the previous boot ended cleanly
+Documentation=file:///srv/dev/repos/home-server/host/hs-boot-report.sh
+# The uplink is wifi, brought up by home-server-wifi.service; the script also waits for
+# a default route and retries the send. Being a oneshot WantedBy multi-user.target, a
+# slow or dead link holds multi-user.target back until it gives up (TimeoutStartSec);
+# guests (pve-guests.service) are not ordered after it, so they start regardless.
+Wants=network-online.target home-server-wifi.service
+After=network-online.target home-server-wifi.service
+
+[Service]
+Type=oneshot
+# Root: journalctl -b -1 must see PID 1's entries from the previous boot.
+# Wait/retry knobs (defaults in the script): BOOT_REPORT_WAIT=300 BOOT_REPORT_TRIES=10
+# BOOT_REPORT_RETRY_SEC=30.
+#Environment=BOOT_REPORT_TRIES=10
+# Same SMTP credentials + recipient as hs-tmp-watch (root 600, from
+# host/host-alerts.env.example — never committed). Leading '-' => a missing file is not
+# a unit error by itself; the script exits 1 (unit failed) when it can't email.
+EnvironmentFile=-/etc/home-server/host-alerts.env
+ExecStart=/srv/dev/repos/home-server/host/hs-boot-report.sh
+# Covers the route wait (300s) plus every send attempt (10 x (30s pause + 30s SMTP timeout)).
+TimeoutStartSec=20min
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

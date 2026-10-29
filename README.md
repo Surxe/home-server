@@ -5,7 +5,8 @@ laptop). The box is **disposable**: a wrecked box is a scripted rebuild, not a w
 See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
 
 ## Layout
-- `host/` — `/etc/network/interfaces`, wifi bring-up script, logind lid drop-in.
+- `host/` — `/etc/network/interfaces`, wifi bring-up script, logind lid drop-in, host alert
+  scripts (`hs-tmp-watch.sh`, `hs-boot-report.sh`) and their SMTP env template.
 - `systemd/` — `home-server-wifi.service` (wifi persistence), the host backup pair
   `hs-restic-flash.{service,timer}`,
   `hs-todo-classify.{service,timer}` (daily 13:00 CT todo classify + hub sync),
@@ -23,7 +24,11 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   WRFrontiersDB Discord bot — see the `wrf-discord-bot/` area), `hs-tmp-watch.{service,timer}`
   (Mon + Thu: email when the `/tmp` tmpfs passes 50% — it is RAM/swap-backed, so it
   competes with the VM; runs `host/hs-tmp-watch.sh`, SMTP creds in `/etc/home-server/host-alerts.env`
-  from `host/host-alerts.env.example`), and `install.sh` (unit installer).
+  from `host/host-alerts.env.example`), `hs-boot-report.service` (every boot: one email
+  with the start time, whether the previous boot ended cleanly or by power loss/crash,
+  its start/end/uptime, AC + battery state and the uplink; waits for wifi and retries the
+  send; runs `host/hs-boot-report.sh`, same `host-alerts.env` creds), and `install.sh`
+  (unit installer).
 - `steam-tracker/` — the Steam price-tracker subsystem's box-local config: the
   config-as-code tracked-app list (`tracked_apps.json`, edited via the `add-steam-app`
   skill), the SMTP secret template (`steam-tracker.env.example` → live
