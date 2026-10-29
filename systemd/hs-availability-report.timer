@@ -1,0 +1,10 @@
+[Unit]
+Description=Monthly availability email (hs-availability report)
+
+[Timer]
+OnCalendar=*-*-01 09:00:00 America/Chicago
+# Catch up after downtime: the report covers the whole previous month either way.
+Persistent=true
+
+[Install]
+WantedBy=timers.target

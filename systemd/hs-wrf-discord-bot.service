@@ -36,6 +36,11 @@ Environment=ENABLED_SERVICES=lookup,about,builds
 # server, then a second server the bot is in. A server not listed gets no slash commands
 # (message replies still work). Empty = global sync (up to an hour to appear).
 Environment=GUILD_IDS=1043978430888300566,343806367783714816
+# Touched every minute while connected to Discord; hs-availability.service reads its age.
+# StateDirectory creates /var/lib/wrf-discord-bot owned by dev and keeps it writable under
+# ProtectSystem=strict.
+Environment=HEARTBEAT_FILE=/var/lib/wrf-discord-bot/heartbeat
+StateDirectory=wrf-discord-bot
 # DISCORD_BOT_TOKEN only (root-owned, chmod 600, created by hand from
 # wrf-discord-bot/wrf-discord-bot.env.example — never committed). systemd reads it as
 # root and injects it into the dev process; dev never reads the file at rest.

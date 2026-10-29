@@ -123,6 +123,10 @@ if prev:
                                   dur((int(prev["last_entry"]) - int(prev["first_entry"])) / 1e6))
 else:
     span = "unavailable"
+# Downtime: from the previous boot's last journal entry to this boot's first. Includes
+# shutdown and firmware time, so a plain reboot shows about a minute.
+cur = boots.get(0)
+down = dur((int(cur["first_entry"]) - int(prev["last_entry"])) / 1e6) if prev and cur else "unavailable"
 
 ac = {"1": "online", "0": "OFFLINE (on battery)"}.get(e["AC_ONLINE"], e["AC_ONLINE"])
 bat = e["BAT_STATUS"] + ("" if e["BAT_CAP"] == "n/a" else ", %s%%" % e["BAT_CAP"])
@@ -135,6 +139,7 @@ lines = [
     "Previous boot ended:  %s" % verdict,
     "  %s" % detail,
     "Previous boot:        %s" % span,
+    "Down for:             %s" % down,
     "",
     "AC power:             %s" % ac,
     "Battery (BAT1):       %s" % bat,
