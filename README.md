@@ -6,7 +6,7 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
 
 ## Layout
 - `host/` — `/etc/network/interfaces`, wifi bring-up script, logind lid drop-in, host alert
-  scripts (`hs-tmp-watch.sh`, `hs-boot-report.sh`) and their SMTP env template.
+  scripts (`hs-tmp-watch.sh`, `hs-boot-report.sh`, `hs-availability.py`) and their SMTP env template.
 - `systemd/` — `home-server-wifi.service` (wifi persistence), the host backup pair
   `hs-restic-flash.{service,timer}`,
   `hs-todo-classify.{service,timer}` (daily 13:00 CT todo classify + hub sync),
@@ -26,8 +26,14 @@ See `docs/` (mirrored handoff runbook `00`–`07`) for the full design.
   competes with the VM; runs `host/hs-tmp-watch.sh`, SMTP creds in `/etc/home-server/host-alerts.env`
   from `host/host-alerts.env.example`), `hs-boot-report.service` (every boot: one email
   with the start time, whether the previous boot ended cleanly or by power loss/crash,
-  its start/end/uptime, AC + battery state and the uplink; waits for wifi and retries the
-  send; runs `host/hs-boot-report.sh`, same `host-alerts.env` creds), and `install.sh`
+  its start/end/uptime, how long the host was down, AC + battery state and the uplink;
+  waits for wifi and retries the send; runs `host/hs-boot-report.sh`, same
+  `host-alerts.env` creds), `hs-availability.{service,timer}` (every 5 min: one line in
+  `/var/lib/home-server/availability.log` — uplink, the WRF bot via its heartbeat file,
+  later the API; a gap in the log means the host was off) and
+  `hs-availability-report.{service,timer}` (1st of the month: email last month's hours
+  down, availability and longest outage per check, against WRFrontiersDB G-0006-9's
+  threshold; runs `host/hs-availability.py`, same `host-alerts.env` creds), and `install.sh`
   (unit installer).
 - `steam-tracker/` — the Steam price-tracker subsystem's box-local config: the
   config-as-code tracked-app list (`tracked_apps.json`, edited via the `add-steam-app`

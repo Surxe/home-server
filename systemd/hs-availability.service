@@ -1,0 +1,18 @@
+[Unit]
+Description=Availability sample: uplink, WRF bot, (later) API -> one line in the availability log
+Documentation=file:///srv/dev/repos/home-server/host/hs-availability.py
+
+[Service]
+Type=oneshot
+# Root: reads the bot's heartbeat under /var/lib and appends to /var/lib/home-server.
+# Config as code (WRFrontiersDB ADR-0024, G-0024-5). The bot touches BOT_HEARTBEAT every
+# minute while connected to Discord (its HEARTBEAT_FILE, set in hs-wrf-discord-bot.service);
+# after cutover the bot runs in the WRF guest and this path moves to the data volume.
+Environment=AVAIL_LOG=/var/lib/home-server/availability.log
+Environment=BOT_HEARTBEAT=/var/lib/wrf-discord-bot/heartbeat
+Environment=BOT_MAX_AGE=180
+# API_URL unset until the API exists (ADR-0018): its column stays n/a.
+#Environment=API_URL=https://api.wrf-db.info/v1/meta
+ExecStart=/srv/dev/repos/home-server/host/hs-availability.py sample
+TimeoutStartSec=60
+Nice=10

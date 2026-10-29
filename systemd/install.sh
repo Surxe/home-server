@@ -4,7 +4,7 @@
 # Idempotent; run as root. Called by ../install.sh. Secrets are NOT installed here.
 #
 # Scope: the HOST units only — wifi, host backups (flash restic), the todo hub, and
-# host watchdogs (hs-tmp-watch, hs-boot-report). The Valheim units (mod checks, Discord feeds, guest
+# host watchdogs (hs-tmp-watch, hs-boot-report, hs-availability). The Valheim units (mod checks, Discord feeds, guest
 # vzdump) moved to the valheim-server repo and are installed by
 # /srv/dev/repos/valheim-server/systemd/install.sh (run by ../install.sh as a final
 # step, or standalone).
@@ -29,11 +29,13 @@ UNITS=(
   hs-wrf-discord-bot.service    # WRF [[name]] Discord bot (enabled by wrf-discord-bot/install.sh once its token is staged)
   hs-tmp-watch.service          hs-tmp-watch.timer  # twice-weekly: email when /tmp (tmpfs -> RAM/swap) grows too large
   hs-boot-report.service        # every boot: email start time + whether the previous boot ended cleanly
+  hs-availability.service       hs-availability.timer  # every 5 min: uplink/bot/API -> availability log
+  hs-availability-report.service hs-availability-report.timer  # monthly: email last month's availability
 )
 # Timer(s) this installer activates. (`enable --now` on a *timer* only starts its
 # schedule; it does not run the job immediately.) The backup timer's enable-state is left
 # to bootstrap.sh / the operator so this installer never silently flips backup behaviour.
-TIMERS=(hs-todo-classify.timer hs-tmp-watch.timer)
+TIMERS=(hs-todo-classify.timer hs-tmp-watch.timer hs-availability.timer hs-availability-report.timer)
 
 say "linking units into $UNIT_DIR"
 for u in "${UNITS[@]}"; do

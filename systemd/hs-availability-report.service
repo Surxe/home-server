@@ -1,0 +1,16 @@
+[Unit]
+Description=Email last month's availability (hs-availability report)
+Documentation=file:///srv/dev/repos/home-server/host/hs-availability.py
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+Environment=AVAIL_LOG=/var/lib/home-server/availability.log
+# G-0006-9's threshold: hours down per month for the bot or API.
+Environment=AVAIL_THRESHOLD_HOURS=7
+# Same SMTP credentials + recipient as hs-tmp-watch / hs-boot-report (root 600, from
+# host/host-alerts.env.example; never committed).
+EnvironmentFile=-/etc/home-server/host-alerts.env
+ExecStart=/srv/dev/repos/home-server/host/hs-availability.py report
+Nice=10
