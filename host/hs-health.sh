@@ -202,6 +202,9 @@ if qm_out="$(priv qm list 2>/dev/null)"; then
         fi
       fi
       report "VM $vmid ($name)" 0 "$det"
+    elif priv qm config "$vmid" 2>/dev/null | grep -q '^onboot: 0'; then
+      # Deliberately parked (onboot=0, e.g. a retired guest): stopped is expected, not a WARN.
+      info "VM $vmid" "$name $status (onboot=0, parked)"
     else
       report "VM $vmid ($name)" 1 "status=$status"
     fi
