@@ -1,0 +1,16 @@
+[Unit]
+Description=GTA 6 emulation watcher: daily overnight digest (home-server)
+Documentation=https://github.com/Surxe/gta6-emulation-watcher
+
+[Timer]
+# Daily, overnight, in a slot clear of the box's other scheduled jobs:
+#   ~00:00 dpkg-db-backup/logrotate, 01:00/02:00/04:00 hs-wrf-discount-watch (~6s),
+#   ~01:40 pve-daily-update, 03:00 hs-restic-flash, 05:00 hs-todo-b2, ~06:30 apt upgrade.
+# 02:30 + the service's 20-min TimeoutStartSec ends before 03:00. (The patch-triggered
+# WRF orchestrator can't be scheduled around; this job is network-bound and light.)
+OnCalendar=*-*-* 02:30:00 America/Chicago
+# Catch up after downtime (box may have been off at the scheduled slot).
+Persistent=true
+
+[Install]
+WantedBy=timers.target

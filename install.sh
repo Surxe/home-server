@@ -119,6 +119,7 @@ INSTALLERS=(
   "$REPO/claude/install.sh"    # dev's agent context: box-local AGENTS.md, skills, memory -> ~/.agents + ~/.dsh (writes as dev)
   "$REPO/../dev-env/install.sh"  # shared dev config layer: portable skills/cc/ds/memories + dsh plugin (writes as dev)
   "$REPO/steam-tracker/install.sh"  # steam-price-tracker venv build + daily timer (self-guards on the sibling clone)
+  "$REPO/gta6-watcher/install.sh"   # gta6-emulation-watcher venv build + daily digest timer (self-guards on the sibling clone)
   "$REPO/wrf-probe/install.sh"      # WRFrontiersDB-Orchestrator venv build + patch-probe timer (self-guards on the sibling clone)
   "$REPO/wrf-gpu/install.sh"        # host GPU/export deps (RADV + gamescope + dev GPU groups/linger) for the mapper stage
   "$REPO/wrf-volume/install.sh"     # /srv/dev/wrf data-volume fstab mount (nofail; one-time carve is provision-shrink.sh)

@@ -25,6 +25,7 @@ UNITS=(
   hs-todo-sync.service          hs-todo-sync.path   # push-on-commit -> hub (see todo repo)
   hs-wrf-discount-watch.service hs-wrf-discount-watch.timer  # WRF discount announce watch (see wrf-news-research repo)
   hs-steam-price-refresh.service hs-steam-price-refresh.timer  # daily Steam price refresh (see steam-price-tracker repo)
+  hs-gta6-watch.service         hs-gta6-watch.timer  # daily 02:30 GTA 6 emulation digest email (enabled by gta6-watcher/install.sh; see gta6-emulation-watcher repo)
   hs-wrf-update-probe.service   hs-wrf-update-probe.timer  # WRF patch probe (enabled by wrf-probe/install.sh; see WRFrontiersDB-Orchestrator repo)
   hs-wrf-discord-bot.service    # WRF [[name]] Discord bot (enabled by wrf-discord-bot/install.sh once its token is staged)
   hs-tmp-watch.service          hs-tmp-watch.timer  # twice-weekly: email when /tmp (tmpfs -> RAM/swap) grows too large
