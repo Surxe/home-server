@@ -1,0 +1,25 @@
+[Unit]
+Description=GTA 6 emulation watcher: agentic news search, Sonnet review, emailed HTML digest
+Documentation=https://github.com/Surxe/gta6-emulation-watcher
+After=network-online.target
+Wants=network-online.target
+# The watcher is a generic sibling clone; its venv is built by gta6-watcher/install.sh.
+ConditionPathExists=/srv/dev/repos/gta6-emulation-watcher/.venv/bin/python
+
+[Service]
+Type=oneshot
+# Runs as dev: owns the clone (data/ dedup state) and the claude login in ~/.claude.
+# HOME + PATH are set so `claude` (in ~/.local/bin) resolves under systemd.
+User=dev
+Environment=HOME=/home/dev
+Environment=PATH=/home/dev/.local/bin:/usr/local/bin:/usr/bin:/bin
+WorkingDirectory=/srv/dev/repos/gta6-emulation-watcher
+# SMTP credentials + recipient (root 600, staged by hand from
+# gta6-watcher/gta6-watcher.env.example -- never committed). Leading '-' => a missing
+# file is NOT an error: the digest still runs and is printed to the journal.
+EnvironmentFile=-/etc/home-server/gta6-watcher.env
+ExecStart=/srv/dev/repos/gta6-emulation-watcher/.venv/bin/python -m gta6_watcher
+# Two claude calls (search + review, plus at most one re-ask). Capped at 20 min so a
+# 02:30 start always finishes before hs-restic-flash at 03:00.
+TimeoutStartSec=1200
+Nice=10
