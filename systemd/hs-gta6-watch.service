@@ -19,7 +19,7 @@ WorkingDirectory=/srv/dev/repos/gta6-emulation-watcher
 # file is NOT an error: the digest still runs and is printed to the journal.
 EnvironmentFile=-/etc/home-server/gta6-watcher.env
 ExecStart=/srv/dev/repos/gta6-emulation-watcher/.venv/bin/python -m gta6_watcher
-# Two claude calls (search + review, plus at most one re-ask). Capped at 20 min so a
-# 02:30 start always finishes before hs-restic-flash at 03:00.
-TimeoutStartSec=1200
+# One search call per port (5 by default) + review, plus at most one re-ask.
+# Hard-capped at 5 min; a run that overruns is killed rather than lingering.
+TimeoutStartSec=5min
 Nice=10
